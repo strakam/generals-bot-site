@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="alternate icon" href="/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <title>Generals Competition — generals.io bot competition</title>
+  <meta name="description" content="Build a bot to dominate generals.io. The strongest algorithm takes the prize pool." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Generals Competition" />
+  <meta property="og:title" content="Generals Competition" />
+  <meta property="og:description" content="Build a bot to dominate generals.io. $18,300 in prizes — opens Aug 1." />
+  <meta property="og:url" content="https://www.generals.bot/" />
+  <meta property="og:image" content="https://www.generals.bot/assets/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Generals Competition" />
+  <meta name="twitter:description" content="Build a bot to dominate generals.io. $18,300 in prizes — opens Aug 1." />
+  <meta name="twitter:image" content="https://www.generals.bot/assets/og.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    /* body.page is a flex column; growing main pins the footer to the bottom
+       on tall screens (other pages get this from .page-main). */
+    main { flex: 1; }
+
+    /* Hero: centered copy on the left, the live board beside it; then the
+       prize band on the same center axis. */
+    .landing-hero {
+      padding: 3.2rem 1.5rem 0;
+      max-width: 64rem;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+    .hero-copy { text-align: center; }
+    @media (max-width: 860px) {
+      .landing-hero { grid-template-columns: 1fr; gap: 2.4rem; padding-top: 3.2rem; }
+    }
+    .landing-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.2rem;
+    }
+    .landing-title {
+      font-family: var(--font-body);
+      font-size: clamp(2.6rem, 8.5vw, 5.5rem);
+      font-weight: 900;
+      letter-spacing: -0.045em;
+      line-height: 0.95;
+      margin-bottom: 1.5rem;
+    }
+    .landing-title .blue { color: var(--blue); }
+    .landing-title .red { color: var(--red); }
+    .landing-subtitle {
+      font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+      color: var(--muted);
+      max-width: 38rem;
+      margin: 0 auto 2.1rem;
+      line-height: 1.6;
+    }
+    .landing-ctas {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* One large live match, beside the title block. */
+    .hero-board-wrap { display: flex; justify-content: center; }
+    .hero-board {
+      --tile-size: 20px;
+      display: grid;
+      grid-template-columns: repeat(var(--cols, 18), var(--tile-size));
+      grid-template-rows: repeat(var(--rows, 12), var(--tile-size));
+      background: rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--fg);
+      overflow: hidden;
+      transition: opacity 0.6s ease;
+    }
+    .hero-board.fading .tile { opacity: 0; }
+    @media (max-width: 520px) { .hero-board { --tile-size: 12px; } }
+
+    /* Prizes: two loud panels in the two player colors. */
+    .prize-band {
+      max-width: 50rem;
+      margin: 2.6rem auto 0;
+      padding: 0 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    .pz {
+      border: 2px solid var(--fg);
+      padding: 1.4rem 1.4rem 1.2rem;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+    .pz.sprint { border-color: var(--blue); }
+    .pz.marathon { border-color: var(--red); background: color-mix(in srgb, var(--red) 4%, transparent); }
+    .pz-tag {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .pz.sprint .pz-tag b { color: var(--blue); }
+    .pz.marathon .pz-tag b { color: var(--red); }
+    .pz-tag b { font-weight: 700; }
+    /* Reserve three lines so the amount / place / minor rows line up across the
+       two panels even though the blurbs differ in length. */
+    .pz-blurb { font-size: 0.82rem; color: var(--muted); line-height: 1.5; min-height: 4.5em; }
+    .pz-amount {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 5vw, 3.3rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-top: 0.4rem;
+      color: var(--fg);
+    }
+    .pz.sprint .pz-amount { color: var(--blue); }
+    .pz.marathon .pz-amount { color: var(--red); }
+    .pz-first {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .pz-minor {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      color: var(--fg);
+      margin-top: 0.7rem;
+      padding-top: 0.7rem;
+      border-top: 1px solid var(--border);
+    }
+    .pz-minor span { color: var(--muted); }
+    /* Both parts are decided, so each panel leads to its results. `margin-top:
+       auto` is what keeps the two panels ending on one line however the blurbs
+       wrap; the button takes its panel's accent so it reads as part of the
+       card, not a bolted-on control. */
+    .pz-cta {
+      display: block; margin-top: auto; padding: 0.6rem 0.9rem;
+      background: var(--blue); color: #fff; text-decoration: none;
+      font-family: var(--font-mono); font-size: 0.76rem; font-weight: 700;
+      letter-spacing: 0.06em; text-align: center; white-space: nowrap;
+    }
+    .pz.marathon .pz-cta { background: var(--red); }
+    .pz-cta:hover { filter: brightness(1.12); }
+    .pz-cta:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+    @media (max-width: 680px) {
+      .prize-band { grid-template-columns: 1fr; }
+      .pz-blurb { min-height: 0; }
+    }
+  </style>
+</head>
+<body class="page">
+  <site-nav current="" no-ribbon></site-nav>
+
+  <main>
+    <section class="landing-hero">
+      <div class="hero-copy">
+        <p class="landing-eyebrow">Presented by Equilibre × ÚFAL</p>
+        <h1 class="landing-title">
+          <span class="blue">GENERALS</span><br />
+          <span class="red">COMPETITION</span>
+        </h1>
+        <p class="landing-subtitle">
+          Build a bot to dominate generals.io. Any language — about ten lines to your
+          first match. Open to everyone: students, hobbyists, ML researchers.
+        </p>
+        <div class="landing-ctas">
+          <a class="btn-primary" href="/leaderboard">Final standings</a>
+          <a class="btn-secondary" href="/docs">Read the docs</a>
+        </div>
+      </div>
+      <div class="hero-board-wrap">
+        <div class="hero-board" id="heroBoard" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section aria-label="Prizes">
+      <div class="prize-band">
+        <div class="pz sprint">
+          <span class="pz-tag">part 01 · <b>Sprint</b></span>
+          <p class="pz-blurb">Checkpoint one, August 8 — the leaderboard's best entered a tournament for the top 3. Decided.</p>
+          <span class="pz-amount">$3,000</span>
+          <span class="pz-first">first place</span>
+          <span class="pz-minor"><span>2nd</span> $1,000 &nbsp;·&nbsp; <span>3rd</span> $300</span>
+          <a class="pz-cta" href="/sprint">See the results →</a>
+        </div>
+        <div class="pz marathon">
+          <span class="pz-tag">part 02 · <b>Marathon</b> — the main event</span>
+          <p class="pz-blurb">The finish, September 1 — the final tournament crowned the champion. Decided.</p>
+          <span class="pz-amount">$10,000</span>
+          <span class="pz-first">first place</span>
+          <span class="pz-minor"><span>2nd</span> $3,000 &nbsp;·&nbsp; <span>3rd</span> $1,000</span>
+          <a class="pz-cta" href="/results">See the results →</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <site-footer></site-footer>
+
+  <script src="/assets/site.js" defer></script>
+  <script src="/board.js"></script>
+  <script>
+    (() => {
+      // Landing hero: the strong-policy (self-play) showcase games — full board,
+      // strong play. Fog-of-war is visualised on the actual match replays
+      // (player / replays pages), not here.
+      const replays = [
+        '/assets/replay_06.json',
+        '/assets/replay_07.json',
+        '/assets/replay_08.json',
+      ];
+      const hero = document.getElementById('heroBoard');
+      if (hero && window.GeneralsBoard) {
+        window.GeneralsBoard.mount({ container: hero, replayUrls: replays, frameMs: 140 });
+      }
+    })();
+  </script>
+</body>
+</html>

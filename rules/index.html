@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="alternate icon" href="/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <title>Game rules — Generals Competition</title>
+  <meta name="description" content="The complete rules of the Generals Competition: the board, turns and moves, castle building, army growth, combat, win conditions, and match constraints." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Generals Competition" />
+  <meta property="og:title" content="Generals Competition" />
+  <meta property="og:description" content="Build a bot to dominate generals.io. $18,300 in prizes — opens Aug 1." />
+  <meta property="og:url" content="https://www.generals.bot/" />
+  <meta property="og:image" content="https://www.generals.bot/assets/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Generals Competition" />
+  <meta name="twitter:description" content="Build a bot to dominate generals.io. $18,300 in prizes — opens Aug 1." />
+  <meta name="twitter:image" content="https://www.generals.bot/assets/og.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    .rules-game-layout::after { content: ''; display: block; clear: both; }
+    .rules-game-viz {
+      float: right;
+      margin: 0.3rem 0 1.2rem 1.6rem;
+      width: 50%;
+      container-type: inline-size;
+      --tile-size: calc(100cqw / var(--cols, 18));
+      aspect-ratio: var(--cols, 18) / var(--rows, 12);
+      display: grid;
+      grid-template-columns: repeat(var(--cols, 18), 1fr);
+      grid-template-rows: repeat(var(--rows, 12), 1fr);
+      background: rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: opacity 0.6s ease;
+    }
+    .rules-game-viz.fading .tile { opacity: 0; }
+    @media (max-width: 700px) {
+      .rules-game-viz {
+        float: none;
+        width: 100%;
+        margin: 1.2rem auto;
+      }
+    }
+    /* expandable "corner cases" disclosure box */
+    .corner-cases { border: 1px solid var(--border); margin: 1.2rem 0 1.4rem; }
+    .corner-cases summary { cursor: pointer; padding: 0.7rem 1rem; font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.04em; color: var(--fg); display: flex; align-items: center; gap: 0.55rem; list-style: none; }
+    .corner-cases summary::-webkit-details-marker { display: none; }
+    .corner-cases summary::before { content: '+'; color: var(--blue); font-weight: 700; width: 0.7rem; }
+    .corner-cases[open] summary::before { content: '\2212'; }
+    .corner-cases summary:hover { background: rgba(0, 0, 0, 0.03); }
+    .corner-cases .cc-body { padding: 0.1rem 1rem 0.9rem; }
+    .corner-cases .cc-body ul, .corner-cases .cc-body ol { margin: 0.2rem 0 0.6rem; }
+    .corner-cases .cc-body p { margin: 0; }
+    /* round-1 parameter table */
+    .ruleset-table { width: 100%; border-collapse: collapse; margin: 0.8rem 0 0.4rem; font-size: 0.88rem; }
+    .ruleset-table th, .ruleset-table td { text-align: left; padding: 0.5rem 0.8rem; border: 1px solid var(--border); }
+    .ruleset-table th { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+    .ruleset-table td:first-child { font-weight: 600; white-space: nowrap; }
+    .rules-note { font-size: 0.82rem; color: var(--muted); }
+  </style>
+</head>
+<body class="page">
+  <site-nav current="rules"></site-nav>
+
+  <main class="page-main">
+    <header class="page-hero">
+      <p class="eyebrow">The Ruleset</p>
+      <h1>Game rules</h1>
+    </header>
+
+    <section class="section">
+      <h2>01 — The board</h2>
+      <div class="rules-game-layout">
+        <div class="rules-game-viz" id="rules-board" aria-hidden="true"></div>
+        <p>The game is played on a rectangular grid of four tile types:</p>
+        <ul>
+          <li><strong>Plains</strong> — empty passable tiles you spread onto. Moving onto a neutral plain simply makes it yours.</li>
+          <li><strong>Mountains</strong> — impassable and permanent. Moves into a mountain are invalid.</li>
+          <li><strong>Castles</strong> — <em>player-built</em> structures (see <a href="#castles">Building castles</a>). A standing castle produces army for its owner like a general and can be captured in combat. Maps start with <strong>no castles</strong> — every castle on the board was built by someone. (Type <code>3</code> in the bot observation.)</li>
+          <li><strong>Generals</strong> — each player's home base. Lose yours and the game is over.</li>
+        </ul>
+        <h3>Map generation</h3>
+        <p>Every match is played on a freshly generated map with these parameters:</p>
+        <table class="ruleset-table" aria-label="Map parameters">
+          <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Board size</td><td>rectangular — each side drawn independently in 18–21 per game</td></tr>
+            <tr><td>Mountains</td><td>about 20–24% of the board (66–105 tiles)</td></tr>
+            <tr><td>Castles</td><td>none at the start — castles are built by the players</td></tr>
+            <tr><td>Generals</td><td>at least <strong>17 BFS steps</strong> apart over plain tiles</td></tr>
+            <tr><td>Connectivity</td><td>a passable path between the generals is guaranteed</td></tr>
+          </tbody>
+        </table>
+        <p class="rules-note">Maps are random per game — seeds are not reused, so bots can't be tuned to known layouts.</p>
+        <p class="rules-note">Reading the engine source? <code>mountain_density_range = (0.24, 0.26)</code> is sampled <em>before</em> generation carves 9–11 mountain tiles into castle sites (removed again under this ruleset) — what's left on the board is the 66–105 above.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>02 — Turns &amp; moves</h2>
+      <ul>
+        <li>Every turn, each player issues one action: <strong>move</strong>, <strong>build a castle</strong> (<a href="#castles">below</a>), or <strong>pass</strong>.</li>
+        <li>A move pushes army from one of your cells into one of its four adjacent cells (up, down, left, or right). You send either <strong>half</strong> the cell's army or <strong>all but one</strong> — you always leave at least one unit behind.</li>
+        <li>Moving between your own cells merges the armies — no combat.</li>
+        <li><strong>Invalid moves don't crash anything</strong> — they are treated as a silent pass. (Moving from a cell you don't own, into a mountain, off the board, or with nothing to send.)</li>
+        <li>Each turn, both players' moves and any fights are resolved first; army growth is applied afterward.</li>
+      </ul>
+      <details class="corner-cases">
+        <summary>Corner cases</summary>
+        <div class="cc-body">
+          <p>Both moves happen on the same turn, but one resolves fully before the other. Priority, highest first — a tie on one rule falls through to the next:</p>
+          <ol>
+            <li><strong>Chasing</strong> — your move targets the cell the opponent's move starts from. You catch them before they leave.</li>
+            <li><strong>Reinforcing</strong> — your move lands on a cell you own. E.g. they move to capture your general while you move a unit back into it: the reinforcement lands first and the defense holds.</li>
+            <li><strong>Smaller army</strong> — otherwise, the move from the smaller cell resolves first.</li>
+          </ol>
+          <ul>
+            <li>Both generals captured on the same turn → the match is a <strong>draw</strong>.</li>
+          </ul>
+          <p>Note: a recent <a href="https://generals.io" target="_blank" rel="noopener">generals.io</a> update resolves simultaneous general captures by swapping the two players' land and armies. This competition keeps the older rule — it's a draw.</p>
+        </div>
+      </details>
+    </section>
+
+    <section class="section" id="castles">
+      <h2>03 — Building castles</h2>
+      <p>There are no neutral castles to capture — you <strong>build</strong> your own. A build is a full action (it replaces your move that turn) and permanently turns one of your plain cells into a castle.</p>
+      <ul>
+        <li><strong>Where:</strong> any plain cell you own — not a mountain, not a general, not an existing castle.</li>
+        <li><strong>Cost:</strong> paid from the army standing on that cell. Base price <strong>35</strong>, plus a crowding surcharge for each structure you already own (your general and every castle of yours) near the target: <strong>max(0, 14 − 2 × distance)</strong>, Manhattan. Structures 7+ tiles away add nothing.</li>
+        <li><strong>The remainder stays:</strong> build on 50 army at price 47 and the new castle keeps 3. Build with the exact price and the castle sits at <strong>0 army</strong>.</li>
+        <li><strong>Production starts immediately:</strong> a built castle generates one army every other turn, like your general.</li>
+        <li><strong>Invalid builds are a silent pass</strong>, exactly like invalid moves — wrong cell, not enough army, not your land.</li>
+      </ul>
+      <table class="ruleset-table" aria-label="Castle price examples">
+        <thead><tr><th>Distance to your nearest structure</th><th>Surcharge</th><th>Price</th></tr></thead>
+        <tbody>
+          <tr><td>adjacent</td><td>+12</td><td>47</td></tr>
+          <tr><td>2</td><td>+10</td><td>45</td></tr>
+          <tr><td>3</td><td>+8</td><td>43</td></tr>
+          <tr><td>4</td><td>+6</td><td>41</td></tr>
+          <tr><td>5</td><td>+4</td><td>39</td></tr>
+          <tr><td>6</td><td>+2</td><td>37</td></tr>
+          <tr><td>7 or more</td><td>+0</td><td>35</td></tr>
+        </tbody>
+      </table>
+      <p class="rules-note">Surcharges stack: squeezing a castle between your general and another castle, both at distance 2, costs 35 + 10 + 10 = 55. Prices are live — every castle you gain, built <em>or captured</em>, raises your own prices near it. Enemy structures never affect what you pay.</p>
+      <details class="corner-cases">
+        <summary>Corner cases</summary>
+        <div class="cc-body">
+          <ul>
+            <li>Builds resolve <strong>before</strong> either player's move each turn.</li>
+            <li>You can only build on your own cells, and prices depend only on your own structures — the two players' builds can never conflict.</li>
+            <li>A castle captured from the enemy is yours from then on: it produces for you and counts toward <em>your</em> build prices.</li>
+            <li>Castles are permanent — they never revert to plains, they only change owners.</li>
+          </ul>
+        </div>
+      </details>
+      <h3>The extended action space</h3>
+      <p>An action is still one line of five integers, <code>&lt;pass&gt; &lt;row&gt; &lt;col&gt; &lt;dir&gt; &lt;split&gt;</code> — the first field now has three values:</p>
+      <ul>
+        <li><code>0 r c d s</code> — <strong>move</strong> from (r, c) in direction d, exactly as before.</li>
+        <li><code>1 0 0 0 0</code> — <strong>pass</strong>.</li>
+        <li><code>2 r c 0 0</code> — <strong>build</strong> a castle at (r, c). The last two fields are ignored.</li>
+      </ul>
+      <p><strong>The split field applies to moves only.</strong> <code>s = 0</code> moves the <em>entire</em> army minus one — a single army always stays behind to hold the source cell. <code>s = 1</code> moves <em>half</em>, rounded down, leaving the rest. For pass and build the field is ignored.</p>
+    </section>
+
+    <section class="section">
+      <h2>04 — Army growth</h2>
+      <ul>
+        <li><strong>Every other turn</strong>, your general and every castle you own (built or captured) each generate one army.</li>
+        <li><strong>Every 50 turns</strong>, every cell you own gains one army.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>05 — Combat &amp; capture</h2>
+      <p>Moving onto a cell an opponent owns starts a <strong>combat</strong>: the two armies subtract, and the attacker takes the cell only with <em>strictly more</em> army, keeping the difference. On an exact tie the defender keeps the cell.</p>
+      <p>Castles defend like any owned cell — there are no neutral garrisons. Capture an enemy castle and it produces for you.</p>
+      <p><strong>Capturing the enemy general wins instantly.</strong></p>
+    </section>
+
+    <section class="section">
+      <h2>06 — Visibility</h2>
+      <p><strong>The competition is played with fog of war</strong> — exactly like the original generals.io. Each bot sees only the cells next to tiles it owns; the rest of the board is hidden. Tiles you've scouted fade back into fog once you move away, and you can't see an enemy's army or moves outside your vision. Scouting, remembering the map, and inferring where the enemy is are part of the game.</p>
+    </section>
+
+    <section class="section">
+      <h2>07 — How a game ends</h2>
+      <ul>
+        <li><strong>Win</strong> — capture the opponent's general.</li>
+        <li><strong>Deathtouch, from turn 800</strong> — any move that <em>executes</em> onto the enemy general's tile wins instantly, no matter how large the defending army is. One unit is lethal. The defense is a <em>chase</em>: capture the attack's source cell from a third tile that same turn and the touch never executes. Counter-attacking from the general itself is a head-on clash — the attacker wins it.</li>
+        <li><strong>Draw</strong> — neither general falls within <strong>1200 turns</strong>. The cap is a hard draw regardless of territory or army counts, so passive play earns half points at best.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>08 — Match constraints</h2>
+      <p>Matches run on our infrastructure under these limits:</p>
+      <ul>
+        <li><strong>Time per move</strong>: 150 ms. The very first move gets a 10 s grace period so bots that load models or warm up a runtime aren't penalized.</li>
+        <li><strong>Fault budget</strong>: a late, missing, or malformed reply is replaced with a pass and adds one fault. The game continues; reaching <strong>50 faults in one game</strong> forfeits it. A bot process that crashes or exits forfeits immediately. Invalid but correctly formatted game actions are simply silent passes and do not add a runner fault.</li>
+        <li><strong>Hardware</strong>: your bot gets one dedicated CPU core and a hard 2 GB memory cap, enforced per bot — an opponent can never starve you of compute or memory, and a bot that exceeds its own 2 GB crashes and forfeits. The engine runs on its own core beside the bots. No GPU at match time — if you train an RL agent, run inference on CPU.</li>
+        <li><strong>Network</strong>: disabled. Bots can't make outbound calls during matches.</li>
+        <li><strong>Build step</strong>: compiled artifacts (binaries, weights) are produced once before the games via your <code>build.sh</code>. The build has no network access, so anything your bot needs must live in the zip or already be installed in the <a href="/docs#environment">competition environment</a>.</li>
+      </ul>
+      <p>For the bot interface, starter agents, and how to submit, see <a href="/docs">Get started</a>.</p>
+    </section>
+  </main>
+
+  <site-footer></site-footer>
+
+  <script src="/assets/site.js" defer></script>
+  <script src="/board.js"></script>
+  <script>
+    (() => {
+      const el = document.getElementById('rules-board');
+      if (el && window.GeneralsBoard) {
+        window.GeneralsBoard.mount({
+          container: el,
+          replayUrls: [
+            '/assets/replay_01.json',
+            '/assets/replay_02.json',
+            '/assets/replay_03.json',
+            '/assets/replay_04.json',
+            '/assets/replay_05.json',
+          ],
+          frameMs: 140,
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

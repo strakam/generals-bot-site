@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="alternate icon" href="/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <title>Docs — Generals Competition</title>
+  <meta name="description" content="Build, test, and submit your generals.io bot. Any language, no SDK, ~10 lines of code to play your first match." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Generals Competition" />
+  <meta property="og:title" content="Generals Competition" />
+  <meta property="og:description" content="Build a bot to dominate generals.io. $18,300 in prizes — opens Aug 1." />
+  <meta property="og:url" content="https://www.generals.bot/" />
+  <meta property="og:image" content="https://www.generals.bot/assets/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Generals Competition" />
+  <meta name="twitter:description" content="Build a bot to dominate generals.io. $18,300 in prizes — opens Aug 1." />
+  <meta name="twitter:image" content="https://www.generals.bot/assets/og.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    pre.code {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      background: rgba(0,0,0,0.04);
+      border: 1px solid var(--border);
+      padding: 1rem 1.2rem;
+      overflow-x: auto;
+      line-height: 1.6;
+      margin: 0.8rem 0 1.2rem;
+    }
+    /* Prism syntax highlighting — GitHub Light (tuned to site rhythm) */
+    pre[class*="language-"], code[class*="language-"] {
+      color: #1f2328;
+      background: #f6f8fa;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      text-shadow: none;
+      line-height: 1.6;
+    }
+    pre[class*="language-"] {
+      padding: 1rem 1.2rem;
+      margin: 0.8rem 0 1.2rem;
+      border: 1px solid #d0d7de;
+      border-radius: 0;
+      overflow-x: auto;
+    }
+    .token.comment, .token.prolog, .token.doctype, .token.cdata { color: #6e7781; }
+    .token.string, .token.triple-quoted-string, .token.attr-value, .token.regex, .token.char { color: #0a3069; }
+    .token.keyword, .token.boolean, .token.null, .token.important, .token.atrule, .token.tag { color: #cf222e; }
+    .token.builtin, .token.class-name { color: #953800; }
+    .token.function { color: #8250df; }
+    .token.number { color: #0550ae; }
+    .token.operator { color: #cf222e; background: transparent; }
+    .token.punctuation { color: #1f2328; background: transparent; }
+    .token.decorator { color: #8250df; }
+    .token.symbol, .token.constant { color: #0550ae; }
+    .token.variable, .token.parameter { color: #1f2328; }
+    code.inline {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      background: rgba(0,0,0,0.05);
+      padding: 0.08em 0.35em;
+      border-radius: 2px;
+    }
+    .quickstart { counter-reset: step; list-style: none; padding-left: 0; }
+    .quickstart > li { position: relative; padding-left: 2.6rem; margin-bottom: 1.6rem; }
+    .quickstart > li::before {
+      counter-increment: step;
+      content: counter(step, decimal-leading-zero);
+      position: absolute; left: 0; top: 0.05rem;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+    }
+    .quickstart > li > h3 { margin-top: 0 !important; }
+    .docs-grid {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 2.5rem;
+    }
+    /* Grid children default to min-width:auto and refuse to shrink below
+       their widest code line — the column then overflows the viewport and
+       body{overflow-x:hidden} clips it with no way to pan (iOS report).
+       min-width:0 lets the column shrink so pre/table scroll INTERNALLY. */
+    .docs-grid > * { min-width: 0; }
+    .docs-grid .data-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .docs-toc {
+      position: sticky;
+      top: 5rem;
+      align-self: start;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+    .docs-toc ul { list-style: none; padding: 0; margin: 0; }
+    .docs-toc li { margin-bottom: 0.55rem; }
+    .docs-toc a {
+      color: var(--muted);
+      text-decoration: none;
+      border: none;
+      letter-spacing: 0.06em;
+    }
+    .docs-toc a:hover { color: var(--fg); }
+    .callout {
+      border-left: 2px solid var(--accent);
+      padding: 0.8rem 1.1rem;
+      background: rgba(226, 58, 58, 0.04);
+      margin: 1rem 0 1.4rem;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    .callout strong { color: var(--accent); letter-spacing: 0.02em; }
+    .callout.callout-info { border-left-color: #0550ae; background: rgba(5, 80, 174, 0.05); }
+    .callout.callout-info strong { color: #0550ae; }
+    .lang-tabs {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+    .lang-tabs button {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      background: transparent;
+      border: none;
+      padding: 0.5rem 0.9rem;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .lang-tabs button.is-active { color: var(--fg); border-bottom-color: var(--fg); }
+    .lang-panel { display: none; }
+    .lang-panel.is-active { display: block; }
+    /* copy-to-clipboard button on code blocks */
+    .code-wrap { position: relative; }
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      background: var(--bg);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.55rem;
+      cursor: pointer;
+      opacity: 1;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .copy-btn:hover { color: var(--fg); border-color: var(--fg); }
+    .copy-btn.is-copied { color: var(--accent); border-color: var(--accent); opacity: 1; }
+    @media (max-width: 800px) {
+      .docs-grid { grid-template-columns: 1fr; }
+      .docs-toc { position: static; }
+    }
+  </style>
+</head>
+<body class="page">
+  <site-nav current="docs"></site-nav>
+
+  <main class="page-main">
+    <header class="page-hero">
+      <p class="eyebrow">Docs</p>
+      <h1>Get started</h1>
+    </header>
+
+    <div class="docs-grid">
+      <aside class="docs-toc" aria-label="On this page">
+        <ul>
+          <li><a href="#quickstart">Quickstart</a></li>
+          <li><a href="#interface">Bot evaluation interface</a></li>
+          <li><a href="#training">Training interface</a></li>
+          <li><a href="#submit">Submit</a></li>
+          <li><a href="#environment">Environment</a></li>
+          <li><a href="#ruleset">The competition ruleset</a></li>
+          <li><a href="#pitfalls">Pitfalls</a></li>
+        </ul>
+      </aside>
+
+      <div>
+        <section class="section" id="quickstart">
+          <h2>Quickstart</h2>
+          <p>Four steps to run a match locally.</p>
+          <ol class="quickstart">
+            <li>
+              <h3>Clone</h3>
+              <pre class="language-bash"><code class="language-bash">git clone https://github.com/strakam/generals-bots.git
+cd generals-bots</code></pre>
+            </li>
+            <li>
+              <h3>Install</h3>
+              <p>Two ways to install — pick one:</p>
+              <p style="margin-bottom:0.35rem;"><strong>Option A — virtual environment (recommended).</strong> Installs the engine into an isolated <code class="inline">.venv</code>, so its dependencies can't clash with other Python projects on your machine. Choose this if you work on more than one Python project — which is almost everyone.</p>
+              <pre class="language-bash"><code class="language-bash">python -m venv .venv
+source .venv/bin/activate     # Windows: .venv\Scripts\activate
+pip install -e .</code></pre>
+              <p style="color: var(--muted); font-size: 0.85rem; margin-top: -0.4rem;">Re-run <code class="inline">source .venv/bin/activate</code> in any new terminal to get back into the env.</p>
+              <p style="margin-bottom:0.35rem;"><strong>Option B — direct install.</strong> A single command into your current Python. Fewer steps, but the engine's dependencies mix with your global packages and can cause version conflicts. Fine for a throwaway machine or an already-isolated container.</p>
+              <pre class="language-bash"><code class="language-bash">pip install -e .</code></pre>
+            </li>
+            <li>
+              <h3>Copy a starter, edit the strategy</h3>
+              <pre class="language-bash"><code class="language-bash">cp -r competition/agents/expander_python competition/agents/my_bot
+# open competition/agents/my_bot/agent.py and edit Agent.act()</code></pre>
+              <p>The starter is a working baseline that expands into neighboring tiles. Only the body of one function needs to be replaced.</p>
+            </li>
+            <li>
+              <h3>Play a match against the baseline</h3>
+              <pre class="language-bash"><code class="language-bash">python competition/matchup.py \
+  competition/agents/my_bot/run.sh \
+  competition/agents/expander_python/run.sh --gui</code></pre>
+              <p>The <code class="inline">--gui</code> flag opens a Pygame window and renders the match so you can watch it play out — great for debugging, but slower because of the rendering. Drop <code class="inline">--gui</code> to run headless: with rendering disabled the match finishes much faster, which is what you want for quick iteration or running many games. Add <code class="inline">--mode competition</code> to play the exact competition ruleset — rectangular maps, castles, fog of war, and deathtouch.</p>
+            </li>
+          </ol>
+        </section>
+
+        <section class="section" id="interface">
+          <h2>Bot evaluation interface</h2>
+          <p>A bot communicates with the game engine using stdin to read the board and stdout to write an action. The simplest bot passes every turn. Here is an example:</p>
+
+          <div class="lang-tabs" role="tablist">
+            <button class="is-active" data-tab="py" role="tab" aria-selected="true">Python</button>
+            <button data-tab="cpp" role="tab" aria-selected="false">C++</button>
+            <button data-tab="rs" role="tab" aria-selected="false">Rust</button>
+          </div>
+
+          <div class="lang-panel is-active" data-panel="py">
+            <pre class="language-python"><code class="language-python">import sys
+
+# Handshake: one line at startup → "player_id H W"
+_, H, W = map(int, sys.stdin.readline().split())
+
+while True:
+    scalars = sys.stdin.readline()
+    if not scalars: break              # EOF means game over
+    for _ in range(3 * H):             # three grids of H lines each
+        sys.stdin.readline()
+    sys.stdout.write("1 0 0 0 0\n")    # pass
+    sys.stdout.flush()                 # ← do not forget this</code></pre>
+          </div>
+
+          <div class="lang-panel" data-panel="cpp">
+            <pre class="language-cpp"><code class="language-cpp">#include &lt;cstdio&gt;
+
+int main() {
+    int pid, H, W;
+    scanf("%d %d %d", &amp;pid, &amp;H, &amp;W);
+    int t, ml, ma, ol, oa, x;
+    while (scanf("%d", &amp;t) == 1) {           // EOF means game over
+        scanf("%d %d %d %d", &amp;ml, &amp;ma, &amp;ol, &amp;oa);
+        for (int i = 0; i &lt; 3 * H * W; ++i) scanf("%d", &amp;x);
+        printf("1 0 0 0 0\n");                // pass
+        fflush(stdout);                       // ← do not forget this
+    }
+}</code></pre>
+          </div>
+
+          <div class="lang-panel" data-panel="rs">
+            <pre class="language-rust"><code class="language-rust">use std::io::{self, BufRead, Write};
+
+fn main() {
+    let stdin = io::stdin();
+    let mut lines = stdin.lock().lines();
+    let hs = lines.next().unwrap().unwrap();   // handshake "player_id H W"
+    let H: usize = hs.split_whitespace().nth(1).unwrap().parse().unwrap();
+    let out = io::stdout();
+    let mut o = out.lock();
+    while let Some(Ok(_scalars)) = lines.next() {   // EOF means game over
+        for _ in 0..3 * H { lines.next(); }
+        writeln!(o, "1 0 0 0 0").unwrap();          // pass
+        o.flush().unwrap();                         // ← do not forget this
+    }
+}</code></pre>
+          </div>
+
+          <p>The remaining work is to parse the grids into a suitable data structure and select a move.</p>
+
+          <h3>Observation format</h3>
+          <p>Once per turn the engine sends 1 scalar line and 3 grids of H rows × W columns each. All values are whitespace-separated integers.</p>
+          <pre class="code">turn  my_land  my_army  opp_land  opp_army
+&lt;H lines of W ints&gt;     # type:  what's on each cell
+&lt;H lines of W ints&gt;     # owner: who owns each cell
+&lt;H lines of W ints&gt;     # army:  army count on each cell</pre>
+
+          <h4>Type codes</h4>
+          <pre class="code">0  fog                   (cell not visible)
+1  plain                 (empty passable cell)
+2  mountain              (impassable)
+3  castle                (produces army for its owner)
+4  general               (a player's home base)
+5  structure-in-fog      (castle or mountain you can't see clearly)</pre>
+
+          <h4>Owner codes (perspective-relative)</h4>
+          <pre class="code">0  neutral / unknown
+1  ME      ← you are always "1"
+2  OPPONENT</pre>
+          <div class="callout">
+            <strong>Note:</strong> the owner grid is expressed from the bot's own perspective. The bot is always <code class="inline">1</code> and the opponent is always <code class="inline">2</code>, regardless of player index. No conversion is required.
+          </div>
+
+          <h3>Action format</h3>
+          <p>One line per turn, written to stdout (and flushed):</p>
+          <pre class="code">kind row col dir split</pre>
+          <ul>
+            <li><strong>kind</strong> — <code class="inline">0</code> to move, <code class="inline">1</code> to skip the turn, <code class="inline">2</code> to build a castle.</li>
+            <li><strong>row, col</strong> — the cell you move from, or build on. Must be yours; a move also needs army &gt; 1 there.</li>
+            <li><strong>dir</strong> — <code class="inline">0</code> up, <code class="inline">1</code> down, <code class="inline">2</code> left, <code class="inline">3</code> right. Ignored for pass and build.</li>
+            <li><strong>split</strong> — <code class="inline">0</code> moves the whole army but one; <code class="inline">1</code> moves half of the army (floor). Ignored for pass and build.</li>
+          </ul>
+          <p>Examples:</p>
+          <pre class="code">0 3 5 1 0     # move the whole army from (3,5) down
+0 7 2 3 1     # move half of the army from (7,2) right
+2 4 4 0 0     # build a castle on (4,4) — needs the price in army on that cell
+1 0 0 0 0     # pass</pre>
+          <p>Invalid moves (out of bounds, into a mountain, source not yours, source has ≤ 1 army) are silently treated as a pass, and so are invalid builds (cell not yours, not plain land, price not met). No penalty beyond the wasted turn. Castle prices and build mechanics are on the <a href="/rules#castles">Rules page</a>.</p>
+          <div class="callout">
+            <strong>Timing:</strong> reply within the 150 ms wall-clock limit (the first move gets 10 seconds so a model can load). A late, missing, or malformed reply is replaced with a pass and adds one fault; stale replies are discarded, never consumed on a later turn. Reaching <strong>50 faults in one game</strong> forfeits it, while a bot process that crashes or exits forfeits immediately. Invalid but correctly formatted game actions are silent passes and do not add a runner fault. Keep replies fast and always write exactly one line per observation.
+          </div>
+        </section>
+
+        <section class="section" id="training">
+          <h2>Training interface</h2>
+          <p>For training a reinforcement-learning agent rather than a handcrafted heuristic, the same repository provides a vectorized environment built for fast iteration:</p>
+          <ul>
+            <li><strong>JAX environment</strong> — jittable, with batched stepping and auto-reset for high-throughput rollouts (observations come out as arrays; convert with <code class="inline">numpy.asarray</code> if the rest of your stack is NumPy).</li>
+            <li><strong>Same observation semantics as evaluation</strong> — the training environment exposes the same grids and scalars provided over stdio during matches. One difference to plan for: training pools pad every board to a fixed 21×21 with mountains, while graded matches are exact 18–21 rectangles (the handshake gives you the true H and W).</li>
+          </ul>
+          <p>The environment API, usage examples, and training scripts are documented in the repository.</p>
+          <p style="margin-top: 1.2rem;">
+            <a class="btn-secondary" href="https://github.com/strakam/generals-bots" target="_blank" rel="noopener">
+              <svg viewBox="0 0 16 16" aria-hidden="true" style="width:1em;height:1em;fill:currentColor;"><path d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.39 0-.19-.01-.7-.01-1.37-2.22.49-2.69-1.07-2.69-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.81.06 1.23.83 1.23.83.72 1.23 1.88.88 2.34.67.07-.52.28-.88.51-1.08-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.13 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.03 2.2-.82 2.2-.82.44 1.11.16 1.93.08 2.13.51.56.82 1.28.82 2.15 0 3.07-1.86 3.75-3.64 3.95.29.25.54.74.54 1.49 0 1.08-.01 1.95-.01 2.21 0 .22.15.47.55.39A8 8 0 0 0 8 0Z"/></svg>
+              View the generals-bots repo
+            </a>
+          </p>
+        </section>
+
+        <section class="section" id="submit">
+          <h2>Submit</h2>
+          <p>A submission is a zip of a directory. The only required file is <code class="inline">run.sh</code>, which is executed to start the bot.</p>
+          <pre class="code">my_bot/
+  run.sh         # required: launches your bot
+  build.sh       # optional: one-time compile step at intake
+  ... your code ...</pre>
+
+          <p>An example <code class="inline">run.sh</code> for each language:</p>
+
+          <h4 style="font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-top: 1.2rem;">run.sh — Python</h4>
+          <pre class="language-bash"><code class="language-bash">#!/usr/bin/env bash
+exec python -u main.py</code></pre>
+
+          <h4 style="font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-top: 1.2rem;">run.sh — C++ (compiled once by build.sh)</h4>
+          <pre class="language-bash"><code class="language-bash">#!/usr/bin/env bash
+# build.sh did: g++ -O2 -std=c++17 -o agent main.cpp
+exec ./agent</code></pre>
+
+          <h4 style="font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-top: 1.2rem;">run.sh — Rust (compiled once by build.sh)</h4>
+          <pre class="language-bash"><code class="language-bash">#!/usr/bin/env bash
+# build.sh did: cargo build --release
+exec target/release/agent</code></pre>
+
+          <p style="margin-top: 1.4rem;">During the competition, bots were uploaded from the player dashboard; we compiled, sandboxed, and started running matches within a couple of minutes. <b>Submissions are now closed</b> — this site is an archive.</p>
+        </section>
+
+        <section class="section" id="environment">
+          <h2>Environment</h2>
+          <p>The exact runtime your bot executes in. Everything on this page is verified against the live sandbox image, not aspirational — if it's listed, it works.</p>
+
+          <div class="callout">
+            <strong>No network, ever.</strong> Both <code class="inline">build.sh</code> and the match itself run fully offline. You cannot <code class="inline">pip install</code>, <code class="inline">apt install</code>, <code class="inline">cargo fetch</code>, or download anything at build or run time. Everything your bot needs must either be baked into the image (tables below) or shipped inside your zip (<a href="#vendoring">vendoring</a>).
+          </div>
+
+          <h3>Languages &amp; toolchains</h3>
+          <table class="data-table" style="margin: 0.8rem 0 1.4rem;">
+            <thead>
+              <tr><th>Language</th><th>Toolchain</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Python</td>
+                <td>CPython 3.12.10 — scientific stack below</td>
+              </tr>
+              <tr>
+                <td>C++</td>
+                <td>g++ 12.2 (<code class="inline">-std=c++17</code>/<code class="inline">20</code>), <code class="inline">make</code>, <code class="inline">cmake</code>, Eigen (<code class="inline">/usr/include/eigen3</code>)</td>
+              </tr>
+              <tr>
+                <td>Rust</td>
+                <td>rustc / cargo 1.97 (stable)</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>Other languages work too — ship a self-contained binary or a vendored runtime in your zip, started by <code class="inline">run.sh</code>. The engine repository's <code class="inline">expander_python</code> / <code class="inline">expander_cpp</code> / <code class="inline">expander_rust</code> baselines are complete working examples for the three first-class languages.</p>
+
+          <h3>Python libraries (pre-installed)</h3>
+          <p>Import any of these directly — no install step, no wheels to ship. To mirror the sandbox locally, install the pinned versions from the engine repo's <a href="https://github.com/strakam/generals-bots/blob/master/competition/requirements.txt" target="_blank" rel="noopener">competition/requirements.txt</a>:</p>
+          <pre class="language-bash"><code class="language-bash">pip install -r competition/requirements.txt</code></pre>
+          <table class="data-table" style="margin: 0.8rem 0 1.4rem; max-width: 26rem;">
+            <thead>
+              <tr><th>Library</th><th>Version</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code class="inline">numpy</code></td><td>2.4.6</td></tr>
+              <tr><td><code class="inline">scipy</code></td><td>1.18.0</td></tr>
+              <tr><td><code class="inline">pandas</code></td><td>3.0.5</td></tr>
+              <tr><td><code class="inline">scikit-learn</code></td><td>1.9.0</td></tr>
+              <tr><td><code class="inline">torch</code></td><td>2.13.0 (CPU)</td></tr>
+              <tr><td><code class="inline">jax</code></td><td>0.11.0</td></tr>
+              <tr><td><code class="inline">numba</code></td><td>0.66.0</td></tr>
+              <tr><td><code class="inline">networkx</code></td><td>3.6.1</td></tr>
+              <tr><td><code class="inline">safetensors</code></td><td>0.8.0</td></tr>
+              <tr><td><code class="inline">gymnasium</code></td><td>1.3.0</td></tr>
+            </tbody>
+          </table>
+          <p><strong>Not installed:</strong> TensorFlow, CUDA builds of anything, torchvision/torchaudio, RL <em>training</em> frameworks (stable-baselines3, RLlib). The match container runs <em>inference</em> — train on your own hardware and submit the trained weights.</p>
+
+          <h3>Compute &amp; limits</h3>
+          <ul>
+            <li><strong>CPU only, one dedicated core per bot.</strong> No GPU at match time — use CPU builds of ML libraries.</li>
+            <li><strong>Memory: hard 2 GB cap per bot.</strong> Exceeding it crashes your process (a forfeit); it can never affect your opponent.</li>
+            <li><strong>Size:</strong> zip ≤ 50 MB; unpacked ≤ 512 MB and ≤ 10,000 files.</li>
+            <li><strong><code class="inline">$HOME</code> is your own writable directory</strong> — safe for <code class="inline">~/.cache</code>, <code class="inline">~/.cargo</code>, on-disk JIT caches, etc.</li>
+          </ul>
+
+          <h3 id="vendoring">Bringing your own dependencies</h3>
+          <p>Because there is no network at build time, extra dependencies ship inside the zip and install offline in <code class="inline">build.sh</code>:</p>
+          <ul>
+            <li><strong>Python</strong> — put wheels in <code class="inline">./wheels/</code> and run
+              <code class="inline">pip install --no-index --find-links=./wheels -r requirements.txt</code>.
+              Wheels must be Linux (manylinux), CPython 3.12. Mind the 50&nbsp;MB zip cap — this is exactly why <code class="inline">torch</code> is pre-installed rather than vendored.</li>
+            <li><strong>Rust</strong> — run <code class="inline">cargo vendor</code> locally, include the <code class="inline">vendor/</code> directory and <code class="inline">.cargo/config.toml</code>, then <code class="inline">cargo build --release --offline</code>.</li>
+            <li><strong>C++</strong> — header-only libraries drop straight into your tree (Eigen is already provided).</li>
+          </ul>
+
+          <h3>Startup cost</h3>
+          <p><code class="inline">import torch</code> costs ~2.3s and the full scientific stack ~3s of your 10-second first-move budget; a JAX or torch model's first forward pass triggers JIT compilation then, too. Warm what you can in <code class="inline">build.sh</code> — but note an in-memory JIT cache does <em>not</em> survive from <code class="inline">build.sh</code> to <code class="inline">run.sh</code>, so persist caches to disk inside your tree.</p>
+        </section>
+
+        <section class="section" id="ruleset">
+          <h2>The competition ruleset</h2>
+          <p>Matches run under one pinned ruleset — locally it's <code class="inline">--mode competition</code> on the runner:</p>
+          <ul>
+            <li><strong>Rectangular maps</strong>, each side 18–21 — read the size from the handshake, never hard-code it.</li>
+            <li><strong>Fog of war</strong> — like the original generals.io, you see only the cells next to tiles you own, so type codes <code class="inline">0</code> (fog) and <code class="inline">5</code> (structure-in-fog) <em>do</em> appear; everything beyond your vision is hidden.</li>
+            <li><strong>No neutral castles</strong> — you build your own with the <code class="inline">2 r c 0 0</code> action (pricing on the <a href="/rules#castles">Rules page</a>).</li>
+            <li><strong>Deathtouch from turn 800</strong>, and a <strong>1200-turn</strong> cap — see <a href="/rules">Rules</a> for the exact semantics.</li>
+          </ul>
+        </section>
+
+        <section class="section" id="pitfalls">
+          <h2>Common pitfalls</h2>
+          <ul>
+            <li><strong>Flush stdout after every action.</strong> Pipes are fully buffered by default. Without a flush, the runner does not receive the move and the game deadlocks. (<code class="inline">python -u</code> or <code class="inline">sys.stdout.flush()</code>; <code class="inline">fflush(stdout)</code>; <code class="inline">.flush()</code>.)</li>
+            <li><strong>EOF means game over.</strong> stdin closes when the match ends — there is no "winner" line. An empty result from <code class="inline">readline()</code> indicates the bot should exit.</li>
+            <li><strong>Owner is relative to the bot.</strong> Owned cells are <code class="inline">1</code> and opponent cells are <code class="inline">2</code>, regardless of player index. Remapping is unnecessary.</li>
+            <li><strong>Invalid moves do not crash.</strong> They are treated as a silent pass. Local testing is recommended to avoid wasted turns.</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <site-footer></site-footer>
+
+  <script src="/assets/site.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  <script>
+    // Copy-to-clipboard buttons on every code block.
+    document.querySelectorAll('pre[class*="language-"], pre.code').forEach((pre) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'code-wrap';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy-btn';
+      btn.textContent = 'Copy';
+      btn.setAttribute('aria-label', 'Copy code to clipboard');
+      wrap.appendChild(btn);
+
+      btn.addEventListener('click', async () => {
+        const code = (pre.querySelector('code') || pre).innerText;
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const ta = document.createElement('textarea');
+          ta.value = code; ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); } catch {}
+          document.body.removeChild(ta);
+        }
+        btn.textContent = 'Copied';
+        btn.classList.add('is-copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('is-copied'); }, 1500);
+      });
+    });
+  </script>
+  <script>
+    // Language-tab switcher for the Other Languages section.
+    document.querySelectorAll('.lang-tabs').forEach((tabs) => {
+      const buttons = tabs.querySelectorAll('button');
+      const panels = tabs.parentElement.querySelectorAll('.lang-panel');
+      buttons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          buttons.forEach((b) => { b.classList.remove('is-active'); b.setAttribute('aria-selected', 'false'); });
+          panels.forEach((p) => p.classList.remove('is-active'));
+          btn.classList.add('is-active');
+          btn.setAttribute('aria-selected', 'true');
+          const id = btn.dataset.tab;
+          tabs.parentElement.querySelector(`.lang-panel[data-panel="${id}"]`).classList.add('is-active');
+        });
+      });
+    });
+  </script>
+</body>
+</html>

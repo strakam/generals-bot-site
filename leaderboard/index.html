@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="alternate icon" href="/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <title>Leaderboard — Generals Competition</title>
+  <meta name="description" content="Top bots in the Generals Competition, ranked by rolling Elo." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Generals Competition" />
+  <meta property="og:title" content="Generals Competition" />
+  <meta property="og:description" content="Build a bot to dominate generals.io. $18,300 in prizes — opens Aug 1." />
+  <meta property="og:url" content="https://www.generals.bot/" />
+  <meta property="og:image" content="https://www.generals.bot/assets/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Generals Competition" />
+  <meta name="twitter:description" content="Build a bot to dominate generals.io. $18,300 in prizes — opens Aug 1." />
+  <meta name="twitter:image" content="https://www.generals.bot/assets/og.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    .lb-controls {
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.4rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+    }
+    .lb-controls input,
+    .lb-controls select {
+      font-family: inherit;
+      font-size: inherit;
+      padding: 0.55rem 0.7rem;
+      border: 1px solid var(--fg);
+      background: transparent;
+      color: var(--fg);
+    }
+    .lb-meta {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+    }
+    .lb-author {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      color: var(--fg); text-decoration: none; border: none;
+    }
+    .lb-avatar { width: 22px; height: 22px; border: 1px solid var(--border); display: block; object-fit: cover; flex-shrink: 0; }
+    .lb-avatar-ph {
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
+      color: var(--muted); background: rgba(0,0,0,0.04);
+    }
+    .lb-flag { font-size: 0.95em; line-height: 1; cursor: default; }
+    /* whole row navigates to the player's profile (baselines → their replays) —
+       hover makes that unmistakable: tinted row, solid underline on the name,
+       and a → affordance at the row's end */
+    #lb tbody tr[data-href] { cursor: pointer; }
+    #lb tbody tr[data-href]:hover { background: rgba(0, 0, 0, 0.045); }
+    #lb tbody tr[data-href]:hover .lb-player { border-bottom: 1px solid var(--fg); }
+    #lb tbody tr[data-href] td:last-child { position: relative; }
+    #lb tbody tr[data-href] td:last-child::after {
+      content: '→'; position: absolute; right: 0.35rem; top: 50%; transform: translateY(-50%);
+      font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted);
+      opacity: 0; transition: opacity .12s;
+    }
+    #lb tbody tr[data-href]:hover td:last-child::after { opacity: 1; }
+    .lb-elo { font-weight: 700; color: var(--fg); }
+    .lb-player { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--border); }
+    .lb-player:hover { border-bottom-color: var(--fg); }
+    .lb-search { font-family: var(--font-mono); font-size: 0.78rem; padding: 0.55rem 0.7rem; border: 1px solid var(--fg); background: transparent; color: var(--fg); min-width: 16rem; }
+    /* narrow screens: the 5-column table pans inside its own container
+       instead of overflowing the clipped body (iOS report) */
+    #lb { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    tr.is-baseline td { color: var(--muted); }
+    tr.is-baseline .lb-elo { color: var(--muted); }
+    .lb-rec .w { color: #15803d; font-weight: 700; }
+    .lb-rec .l { color: var(--red); font-weight: 700; }
+    .lb-rec .d { color: var(--muted); font-weight: 700; }
+    .lb-move { font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; margin-left: 0.4rem; vertical-align: middle; white-space: nowrap; }
+    .lb-move.up { color: #15803d; }
+    .lb-move.down { color: var(--red); }
+    .medal { font-size: 1.1em; line-height: 1; }
+    .data-table td.rank { white-space: nowrap; }
+    .lb-new { display: inline-block; margin-left: 0.5rem; padding: 0.08rem 0.32rem; font-family: var(--font-mono); font-size: 0.55rem; font-weight: 700; letter-spacing: 0.1em; color: var(--bg); background: var(--fg); vertical-align: middle; }
+    .lb-empty, .lb-loading { color: var(--muted); font-size: 0.9rem; padding: 1.5rem 0; }
+    .lb-note {
+      font-family: var(--font-mono); font-size: 0.74rem; line-height: 1.6;
+      color: var(--muted); border-left: 2px solid var(--fg);
+      padding: 0.5rem 0.9rem; margin: 0 0 1.4rem;
+    }
+    .lb-note b { color: var(--fg); }
+
+    /* Deadline strip: a single quiet row above the board, showing the NEXT
+       deadline only. The digits carry the weight — everything else stays
+       label-sized so it reads as a deadline, not a banner. Red marks it, the
+       Marathon's colour on the landing page (the Sprint's was blue). */
+    .deadline-cd {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; flex-wrap: wrap;
+      border: 1px solid var(--border); border-left: 3px solid var(--red);
+      padding: 0.7rem 1rem; margin-bottom: 1.4rem;
+    }
+    .deadline-cd .dc-l { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+    .deadline-cd .dc-label {
+      font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .deadline-cd .dc-when { font-family: var(--font-mono); font-size: 0.72rem; color: var(--fg); }
+    .deadline-cd .dc-time {
+      font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700;
+      color: var(--red); font-variant-numeric: tabular-nums; white-space: nowrap;
+    }
+    /* past the deadline: keep the row, drop the emphasis */
+    .deadline-cd.is-done { border-left-color: var(--border); }
+    .deadline-cd.is-done .dc-time { color: var(--muted); font-size: 0.9rem; font-weight: 400; }
+    @media (max-width: 520px) { .deadline-cd .dc-time { font-size: 1.05rem; } }
+    .lb-prov { color: var(--muted); font-weight: 400; margin-left: 2px; cursor: help; }
+  </style>
+</head>
+<body class="page">
+  <site-nav current="leaderboard"></site-nav>
+
+  <main class="page-main">
+    <header class="page-hero">
+      <p class="eyebrow">Final Standings</p>
+      <h1>Leaderboard</h1>
+    </header>
+
+    <div class="deadline-cd" id="finishCd" hidden>
+      <div class="dc-l">
+        <span class="dc-label">Marathon finish</span>
+        <span class="dc-when" id="finishCdWhen"></span>
+      </div>
+      <span class="dc-time" id="finishCdTime">—</span>
+    </div>
+
+    <p class="lb-note">This is the league ranking as it stood when the Marathon closed — it decided
+      who <b>qualified</b>, not who won. The official results come from the final tournaments:
+      <a href="/results">Marathon</a> and <a href="/sprint">Sprint</a>.
+      A <b>?</b> marks a provisional Elo — a bot that hadn't played most of the field.
+      Games and record count each player's <b>last bot version</b>.</p>
+
+    <div class="lb-controls">
+      <input class="lb-search" type="search" id="lbSearch" placeholder="Search player…" aria-label="Search" />
+      <span class="lb-meta" id="lbMeta"></span>
+    </div>
+
+    <div id="lb"><p class="lb-loading">Loading standings…</p></div>
+  </main>
+
+  <site-footer></site-footer>
+
+  <script src="/assets/site.js" defer></script>
+  <script type="module">
+    const lb = document.getElementById('lb');
+    const meta = document.getElementById('lbMeta');
+    const search = document.getElementById('lbSearch');
+    const { esc, MEDALS, countryFlag } = window.GC; // shared helpers (assets/site.js)
+
+    // Marathon countdown. Deliberately NOT GC.tickCountdown: that one reloads the
+    // page at zero (right for the pre-release gate, which comes back in its live
+    // layout and never re-mounts). This strip renders unconditionally, so a
+    // reload at zero would tick to zero and reload again, forever.
+    (async () => {
+      const el = document.getElementById('finishCd');
+      const timeEl = document.getElementById('finishCdTime');
+      const whenEl = document.getElementById('finishCdWhen');
+      // await first: this is what captures the server-clock offset the deadline
+      // ticks on. Before the competition opens the board is a sealed panel, and
+      // a finish line above it would only confuse — leave it hidden.
+      await window.GC.phase(); // always live on the static archive
+
+      const finish = window.GC.phaseFor(window.GC.MARATHON_END_ISO);
+      // Local time AND the rule that produced it. Everyone east of UTC-12 — which
+      // is very nearly everyone — sees a September 1st date for a competition
+      // that ends "in August", so the instant alone reads like a mistake. The
+      // suffix is what makes it obviously deliberate.
+      whenEl.textContent = `${window.GC.fmtStartsAt(finish)} · end of August anywhere on Earth`;
+      el.hidden = false;
+
+      const tick = () => {
+        const left = finish.msLeft();
+        if (left <= 0) {
+          clearInterval(timer);
+          el.classList.add('is-done');
+          // Says the clock ran out, and nothing more. This strip gates nothing —
+          // claiming "submissions closed" here would be asserting a lock that
+          // does not exist (see MARATHON_END_ISO in assets/site.js).
+          timeEl.textContent = 'Finished';
+          return;
+        }
+        timeEl.textContent = window.GC.fmtLeft(left);
+      };
+      const timer = setInterval(tick, 1000);
+      tick();
+    })();
+    const ordinal = (n) => {
+      const t = ['th', 'st', 'nd', 'rd'], v = n % 100;
+      return n + (t[(v - 20) % 10] || t[v] || t[0]);
+    };
+    let all = [];
+
+    function render(filter = '') {
+      const rows = all.filter((r) => !filter || (r.label || '').toLowerCase().includes(filter.toLowerCase()));
+      if (!all.length) { lb.innerHTML = '<p class="lb-empty">No ranked agents yet — submissions join the league once they pass the quick check.</p>'; return; }
+      const body = rows.map((r) => {
+        const rank = r._rank;
+        const games = Number(r.games) || 0;
+        const wins = Number(r.wins) || 0, losses = Number(r.losses) || 0, draws = Number(r.draws) || 0;
+        const pct = games ? Math.round((100 * wins) / games) : 0;
+        const base = r.kind === 'baseline';
+        const name = esc(r.label);
+        const d = r._delta;
+        const move = d && d !== 0
+          ? `<span class="lb-move ${d > 0 ? 'up' : 'down'}" title="${d > 0 ? 'Up' : 'Down'} ${Math.abs(d)} since your last visit">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</span>`
+          : '';
+        const rankInner = base ? '—'
+          : rank <= 3 ? `<span class="medal" title="Rank ${rank}">${MEDALS[rank - 1]}</span>` : rank;
+        const badge = r._isNew ? '<span class="lb-new" title="New since your last visit">NEW</span>' : '';
+        const ava = r.avatar_url
+          ? `<img class="lb-avatar" src="${esc(r.avatar_url)}" alt="" loading="lazy" />`
+          : `<span class="lb-avatar lb-avatar-ph">${base ? '⚙' : esc((r.label || '?').trim().charAt(0).toUpperCase())}</span>`;
+        const flag = countryFlag(r.country);
+        const flagHtml = flag ? ` <span class="lb-flag" title="${esc(r.country)}">${flag}</span>` : '';
+        const title = r.bio ? `${r.label} — ${r.bio}` : base ? 'Reference bot' : `View ${r.label}'s profile`;
+        const href = base ? null : `/player/?name=${encodeURIComponent(r.label)}`;
+        const nameHtml = href
+          ? `<a class="lb-player" href="${href}" title="${esc(title)}">${name}</a>`
+          : `<span title="${esc(title)}">${name}</span>`;
+        return `
+          <tr class="${base ? 'is-baseline' : ''}"${href ? ` data-href="${href}"` : ''}>
+            <td class="rank${rank <= 3 && !base ? ' rank-top' : ''}">${rankInner}${move}</td>
+            <td><span class="lb-author">${ava}${nameHtml}${flagHtml}</span>${badge}</td>
+            <td class="num lb-elo">${Number(r.elo)}${r.provisional ? `<span class="lb-prov" title="Provisional — played ${Number(r.covered) || 0} of ${Number(r.possible) || 0} possible opponents so far; the recurring full round (every 6 hours) fills in the rest">?</span>` : ''}</td>
+            <td class="lb-rec"><span class="w">${wins}W</span> <span class="l">${losses}L</span> <span class="d">${draws}D</span></td>
+            <td class="num">${games ? pct + '%' : '—'}</td>
+          </tr>`;
+      }).join('');
+      lb.innerHTML = `
+        <table class="data-table" aria-label="Leaderboard">
+          <thead><tr>
+            <th class="rank">#</th><th>Player</th><th class="num">Elo</th>
+            <th>Record</th><th class="num">Win %</th>
+          </tr></thead>
+          <tbody>${body || '<tr><td colspan="5" class="lb-empty">No matches yet.</td></tr>'}</tbody>
+        </table>`;
+    }
+
+    async function load() {
+      try {
+        // Static archive: the league table frozen at the end of the Marathon.
+        const lbRes = await fetch('/data/leaderboard.json');
+        if (!lbRes.ok) throw new Error();
+        const data = await lbRes.json();
+        all = data.leaderboard || [];
+        // rank only the participants; baselines are reference rows
+        let n = 0;
+        for (const r of all) r._rank = r.kind === 'baseline' ? null : (n += 1);
+        // movement arrows + NEW badge: compare each player's rank to what it was the
+        // last time this viewer loaded the board (localStorage). +delta = climbed.
+        let prev = {};
+        try { prev = JSON.parse(localStorage.getItem('gc_lb_ranks') || '{}'); } catch {}
+        const hadPrev = Object.keys(prev).length > 0;
+        const nextRanks = {};
+        for (const r of all) {
+          if (r.kind === 'baseline' || r._rank == null) continue;
+          nextRanks[r.key] = r._rank;
+          const p = prev[r.key];
+          r._delta = typeof p === 'number' ? p - r._rank : null;
+          r._isNew = hadPrev && p == null; // first time this viewer has seen this agent
+        }
+        try { localStorage.setItem('gc_lb_ranks', JSON.stringify(nextRanks)); } catch {}
+        const players = all.filter((r) => r.kind !== 'baseline').length;
+        const frozen = data.frozen_at ? ` · frozen ${window.GC.fmtDate(data.frozen_at)}` : '';
+        meta.textContent = `${players} ranked · ${all.length} entries${frozen}`;
+        render(search.value);
+      } catch {
+        lb.innerHTML = '<p class="lb-empty">Could not load the leaderboard.</p>';
+      }
+    }
+
+    search.addEventListener('input', () => render(search.value));
+    // whole-row click → the row's profile/replays link. Delegated on the
+    // container so it survives re-renders; real links inside keep their own
+    // behavior (middle-click, new tab).
+    lb.addEventListener('click', (e) => {
+      if (e.target.closest('a')) return;
+      const tr = e.target.closest('tr[data-href]');
+      if (tr) location.href = tr.dataset.href;
+    });
+    load();
+  </script>
+</body>
+</html>

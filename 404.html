@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="alternate icon" href="/favicon.ico" sizes="any" />
+  <title>Not found — Generals Competition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    .nf { text-align: center; padding: 4rem 1rem; }
+    .nf .code { font-family: var(--font-display); font-size: clamp(3rem, 10vw, 6rem); font-weight: 800; line-height: 1; color: var(--red); }
+    .nf p { color: var(--muted); margin: 1rem auto 2rem; max-width: 32rem; }
+    .nf .links { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
+  </style>
+</head>
+<body class="page">
+  <site-nav current=""></site-nav>
+  <main class="page-main">
+    <div class="nf">
+      <p class="eyebrow">404</p>
+      <div class="code">Not found</div>
+      <p>This page does not exist. The competition is over and the site is a static archive —
+         sign-in, the dashboard and submissions are gone, but every result and tournament replay is still here.</p>
+      <div class="links">
+        <a class="btn-primary" href="/">Home</a>
+        <a class="btn-secondary" href="/results">Marathon results</a>
+        <a class="btn-secondary" href="/leaderboard">Leaderboard</a>
+      </div>
+    </div>
+  </main>
+  <site-footer></site-footer>
+  <script src="/assets/site.js" defer></script>
+</body>
+</html>

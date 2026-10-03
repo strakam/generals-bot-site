@@ -1,0 +1,482 @@
+/* Shared site-wide styles: nav, footer, page shell, common primitives.
+   Each page links this in addition to /style.css (which holds the design tokens). */
+
+/* The `hidden` attribute must actually hide. The browser's own [hidden] rule is
+   `display: none`, but ANY author rule setting display beats it — so an element
+   written as `<div class="thing" hidden>` whose class says `display: flex` is
+   visible, and every countdown strip on this site is exactly that shape. The
+   symptom is a flash of the placeholder ("—") on load, before the script that
+   owns the element decides whether it belongs on the page at all.
+   !important because a bare [hidden] ties on specificity with a single class and
+   would then lose to a page's inline <style> on source order. */
+[hidden] { display: none !important; }
+
+/* -------- Layout shell -------- */
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-main {
+  flex: 1;
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.page-hero {
+  padding: 3rem 0 2rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2.5rem;
+}
+.page-hero .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.page-hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4.5vw, 2.8rem);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.05;
+  margin-bottom: 0.8rem;
+}
+.page-hero p {
+  color: var(--muted);
+  font-size: 1.05rem;
+  max-width: 38rem;
+  line-height: 1.65;
+}
+
+/* -------- Top navigation -------- */
+.site-nav {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.site-nav-inner {
+  max-width: 64rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
+}
+.site-nav-brand {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  border: none;
+  color: var(--fg);
+  white-space: nowrap;
+}
+.site-nav-brand-strong { font-weight: 700; }
+.site-nav-brand-dim { color: var(--muted); font-weight: 500; }
+.site-nav-list {
+  display: flex;
+  gap: 1.6rem;
+  list-style: none;
+  padding: 0; margin: 0;
+}
+.site-nav-list a {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: none;
+  padding: 0.3rem 0;
+  transition: color 0.2s;
+}
+.site-nav-list a:hover { color: var(--fg); }
+.site-nav-list a.is-current {
+  color: var(--fg);
+  border-bottom: 2px solid var(--fg);
+}
+.site-nav-auth { display: flex; align-items: center; gap: 0.6rem; }
+.site-nav-cta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg);
+  text-decoration: none;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--fg) !important;
+  transition: background 0.2s, color 0.2s;
+}
+.site-nav-cta:hover { background: var(--fg); color: var(--bg); }
+.site-nav-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  border: none !important;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+}
+.site-nav-avatar { width: 26px; height: 26px; border: 1px solid var(--fg); display: block; }
+
+@media (max-width: 800px) {
+  .site-nav-inner { flex-wrap: wrap; gap: 0.8rem; }
+  .site-nav-list { order: 3; width: 100%; gap: 1rem; flex-wrap: wrap; }
+  .site-nav-list a { font-size: 0.7rem; }
+}
+
+/* -------- Footer -------- */
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 2.5rem 1.5rem 2rem;
+  margin-top: 3rem;
+}
+.site-footer-inner {
+  max-width: 64rem;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.site-footer-sponsors {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.site-footer-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.site-footer-logo { height: 22px; opacity: 0.85; }
+.site-footer-sponsor { display: inline-flex; align-items: center; border: none; }
+.site-footer-sponsor:hover .site-footer-logo { opacity: 1; }
+.site-footer-meta {
+  display: flex;
+  gap: 1.1rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+.site-footer-meta a { color: var(--muted); border: none; }
+.site-footer-meta a:hover { color: var(--fg); border-bottom: 1px solid var(--fg); }
+
+@media (max-width: 800px) {
+  .site-footer-inner { flex-direction: column; align-items: flex-start; }
+}
+
+/* -------- Common primitives -------- */
+.section { margin-top: 3rem; }
+.section h2 {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1.4rem;
+}
+.section h3 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  margin: 1.8rem 0 0.7rem;
+}
+.section p, .section li {
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 0.7rem;
+  color: var(--fg);
+}
+.section p { color: var(--fg); }
+.section li { color: var(--fg); }
+.section ul, .section ol { padding-left: 1.4rem; }
+/* Bullets are small squares that alternate the two players' colours (blue/red),
+   echoing the board tiles. Numbered lists (ol) keep their numbers. */
+.section ul { list-style: none; }
+.section ul > li { position: relative; }
+.section ul > li::before {
+  content: '';
+  position: absolute;
+  left: -1.25rem;
+  top: 0.62em;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--blue);
+}
+.section ul > li:nth-child(even)::before { background: var(--red); }
+.section a { color: var(--fg); }
+
+.card {
+  border: 1px solid var(--border);
+  padding: 1.4rem;
+  background: var(--bg);
+}
+.card.is-bordered { border-color: var(--fg); }
+
+.btn-primary, .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 1px solid var(--fg);
+  cursor: pointer;
+  transition: opacity 0.2s, background 0.2s, color 0.2s;
+}
+.btn-primary { background: var(--fg); color: var(--bg); }
+.btn-primary:hover { opacity: 0.85; }
+.btn-secondary { background: transparent; color: var(--fg); }
+.btn-secondary:hover { background: var(--fg); color: var(--bg); }
+
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+/* -------- Tables (leaderboard, replays) -------- */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+.data-table th, .data-table td {
+  text-align: left;
+  padding: 0.8rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+.data-table th {
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+.data-table tr:hover td { background: rgba(0, 0, 0, 0.03); }
+.data-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.data-table .rank { color: var(--muted); width: 3rem; }
+.data-table .rank-top { color: var(--fg); font-weight: 700; }
+
+/* ---- shared replay viewer (used by replays.html and player.html) ---------- */
+.replay-viewer-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted);
+  letter-spacing: 0.08em; margin-bottom: 0.9rem; padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+.replay-viewer-stage {
+  display: grid; place-items: center; container-type: size;
+  /* definite height so tall grids can size against it; boards up to ~21×21
+     fit without scrolling, and the height caps what width-fitting misses */
+  height: min(68vh, 40rem);
+  color: var(--muted);
+  font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.06em;
+}
+@media (max-width: 800px) { .replay-viewer-stage { height: min(60vh, 30rem); } }
+/* contained board grid (reuses the global .tile styling via --tile-size).
+   Tiles fit BOTH axes — width/cols and height/rows — so any grid shape up to
+   the stage box renders whole; the px cap keeps small boards from ballooning. */
+.replay-board {
+  --tile-size: min(calc(100cqw / var(--cols, 10)), calc(100cqh / var(--rows, 10)), 36px);
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 10), var(--tile-size));
+  grid-template-rows: repeat(var(--rows, 10), var(--tile-size));
+  gap: 0; margin: auto;
+}
+.replay-controls {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding-top: 1rem; border-top: 1px solid var(--border); margin-top: 1rem;
+}
+.replay-controls button {
+  font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.18em;
+  text-transform: uppercase; background: transparent; color: var(--fg);
+  border: 1px solid var(--fg); padding: 0.4rem 0.8rem; cursor: pointer;
+}
+.replay-controls button:hover { background: var(--fg); color: var(--bg); }
+.replay-controls button:disabled, .replay-controls .rscrub:disabled { opacity: 0.35; cursor: default; }
+.replay-controls .rscrub {
+  flex: 1; -webkit-appearance: none; appearance: none;
+  height: 4px; background: var(--border); cursor: pointer;
+}
+.replay-controls .rscrub::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 10px; height: 10px; background: var(--fg); cursor: pointer;
+}
+.replay-controls .rscrub::-moz-range-thumb { width: 10px; height: 10px; background: var(--fg); border: 0; }
+.replay-score { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.9rem; }
+.rs-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.6rem; border-left: 3px solid transparent; font-family: var(--font-mono); font-size: 0.8rem; }
+.rs-row.rs-blue { border-left-color: var(--blue); background: color-mix(in srgb, var(--blue) 9%, transparent); }
+.rs-row.rs-red { border-left-color: var(--red); background: color-mix(in srgb, var(--red) 9%, transparent); }
+.rs-row.rs-blue.is-leader { background: color-mix(in srgb, var(--blue) 20%, transparent); }
+.rs-row.rs-red.is-leader { background: color-mix(in srgb, var(--red) 20%, transparent); }
+.rs-name { flex: 1; color: var(--fg); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rs-stat { color: var(--muted); white-space: nowrap; }
+.rs-stat b { color: var(--fg); font-weight: 700; }
+
+/* fixed-width transport buttons — ▶/❚❚ and 1×/0.5× swap without resizing the bar */
+.replay-controls .ctl-play { width: 2.9rem; padding-left: 0; padding-right: 0; text-align: center; }
+.replay-controls .ctl-speed { width: 3.6rem; padding-left: 0; padding-right: 0; text-align: center; }
+/* scoreboard names link to player profiles (baselines stay plain) */
+.rs-name a { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--border); }
+.rs-name a:hover { border-bottom-color: var(--fg); }
+/* keyboard legend under the viewer controls (replays + profile pages) */
+.replay-hint { margin-top: 0.75rem; font-family: var(--font-mono); font-size: 0.66rem; color: var(--muted); letter-spacing: 0.04em; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.replay-hint kbd { font-family: var(--font-mono); font-size: 0.62rem; line-height: 1.4; color: var(--fg); background: rgba(0,0,0,0.04); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 3px; padding: 0.05rem 0.35rem; }
+.replay-hint .sep { opacity: 0.45; }
+
+/* -------- Pre-release (countdown to competition start) -------- */
+/* Slim strip injected under <site-nav> by site.js while the site is in
+   pre-release; index opts out (its hero carries the big countdown). */
+.gc-ribbon {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--bg);
+  background: var(--fg);
+  padding: 0.5rem 1rem;
+}
+.gc-ribbon b { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Locked-page panel: shown in place of the leaderboard / submit UI. */
+.gc-locked {
+  text-align: center;
+  border: 1px dashed var(--border);
+  padding: 3rem 1.5rem;
+  margin: 1rem 0;
+}
+/* Pre-release note on pages that stay OPEN (e.g. submissions): quieter than a
+   lock — sets expectations without blocking the flow. */
+.gc-prenote {
+  font-size: 0.85rem;
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  border-left: 3px solid var(--blue);
+  padding: 0.7rem 1rem;
+  margin: 0 0 1.2rem;
+  line-height: 1.55;
+}
+.gc-prenote a { color: var(--fg); }
+.gc-locked-title {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.gc-locked-count {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  margin: 0.9rem 0 0.5rem;
+}
+.gc-locked-when {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+.gc-locked-note {
+  font-size: 0.88rem;
+  color: var(--muted);
+  max-width: 30rem;
+  margin: 1.2rem auto 0;
+  line-height: 1.6;
+}
+.gc-locked-note a { color: var(--blue); text-decoration: none; }
+
+/* Pre-release schedule strip — shown under locked-state panels. */
+.gc-timeline {
+  max-width: 30rem;
+  margin: 2.2rem auto 0;
+  text-align: left;
+}
+.gc-timeline-row {
+  display: flex;
+  gap: 1.1rem;
+  padding: 0.55rem 0;
+  border-left: 2px solid var(--border);
+  padding-left: 1.1rem;
+  position: relative;
+}
+.gc-timeline-row::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 1.15rem;
+  width: 8px;
+  height: 8px;
+  background: var(--bg);
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+}
+.gc-timeline-row.is-live::before { border-color: var(--red); background: var(--red); }
+.gc-timeline-when {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg);
+  white-space: nowrap;
+  width: 4.6rem;
+  flex-shrink: 0;
+  padding-top: 0.2rem;
+}
+.gc-timeline-row.is-dim .gc-timeline-when { color: var(--muted); }
+.gc-timeline-what { font-size: 0.85rem; line-height: 1.55; color: var(--muted); }
+.gc-timeline-what b { color: var(--fg); font-weight: 600; }
+
+/* ---- fuzzy filter (shared by /replays and /player) -------------------------
+   The matched characters of a fuzzy query, marked so a loose hit reads as a
+   deliberate match instead of a random row. Emitted by GC.hiMatch. */
+.fz-hit { color: var(--blue); font-weight: 700; }
+/* The filter box itself: mono like the lists it filters, quiet until focused. */
+.fz-search {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--fg);
+}
+.fz-search:focus { outline: none; border-color: var(--fg); }
+.fz-count {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: 0;
+}

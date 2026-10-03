@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="alternate icon" href="/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <title>Marathon Tournament — Generals Competition</title>
+  <meta name="description" content="The Marathon final: 22 archived bots, three rounds, 13,920 games, every pair played from both sides." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Generals Competition" />
+  <meta property="og:title" content="Generals Competition" />
+  <meta property="og:description" content="The Marathon final: 22 archived bots, three rounds, 13,920 games, every pair played from both sides." />
+  <meta property="og:url" content="https://www.generals.bot/" />
+  <meta property="og:image" content="https://www.generals.bot/assets/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Generals Competition" />
+  <meta name="twitter:description" content="The Marathon final: 22 archived bots, three rounds, 13,920 games, every pair played from both sides." />
+  <meta name="twitter:image" content="https://www.generals.bot/assets/og.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    /* ---- headline: champion on the left, the schedule's numbers on the
+       right. Same display-weight treatment as .gc-locked-count, which is the
+       site's one "big number" idiom. Shares the sp- namespace and most of its
+       rules with /sprint: the two pages render the same artifact family. ---- */
+    .sp-top {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 2rem; flex-wrap: wrap; margin-bottom: 2.4rem;
+      padding-bottom: 1.6rem; border-bottom: 1px solid var(--border);
+    }
+    .sp-k { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); }
+    .sp-champ-name {
+      font-family: var(--font-display); font-size: clamp(1.9rem, 5vw, 2.9rem);
+      font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;
+      margin: 0.35rem 0 0.4rem; display: flex; align-items: center; gap: 0.5rem;
+      min-width: 0;
+      /* break-word, NOT anywhere: `anywhere` splits inside a word whenever the
+         line is tight, which turned "ResBot" into "ResBo / t". This only breaks
+         a word that genuinely cannot fit on a line of its own. */
+      overflow-wrap: break-word; word-break: normal; hyphens: none;
+    }
+    /* Let the champion column take the space it needs before the counts wrap
+       underneath, instead of being squeezed until the name has to break. */
+    .sp-top > div:first-child { flex: 1 1 20rem; min-width: 0; }
+    .sp-champ-name .medal { flex-shrink: 0; }
+    .sp-champ-name a { color: inherit; border: none; }
+    .sp-champ-name a:hover { border-bottom: 2px solid var(--fg); }
+    .sp-champ-sub { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); }
+    .sp-champ-sub b { color: var(--fg); }
+    .sp-counts { display: flex; gap: 2rem; }
+    .sp-counts div { text-align: right; }
+    .sp-num {
+      display: block; font-family: var(--font-display); font-size: clamp(1.5rem, 4vw, 2.1rem);
+      font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--fg);
+    }
+    @media (max-width: 620px) { .sp-counts { gap: 1.2rem; } .sp-counts div { text-align: left; } }
+
+    /* ---- section chrome, matching .section h2 but with room for a legend ---- */
+    .sp-sec { margin-top: 3rem; }
+    .sp-h {
+      font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.28em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 1.1rem;
+      display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap;
+    }
+    .sp-h .sp-legend { font-size: 0.62rem; letter-spacing: 0.08em; text-transform: none; }
+    .sp-note {
+      font-family: var(--font-mono); font-size: 0.74rem; line-height: 1.6;
+      color: var(--muted); border-left: 2px solid var(--fg);
+      padding: 0.5rem 0.9rem; margin: 0 0 1.4rem;
+    }
+    .sp-note b { color: var(--fg); }
+    .sp-empty, .sp-loading { color: var(--muted); font-size: 0.9rem; padding: 1.5rem 0; }
+    /* every wide table pans inside its own box — html,body are overflow-x:hidden,
+       so a table that overflows the body silently clips instead of scrolling */
+    .sp-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* ---- standings ----
+       The avatar + flag + rank-move cluster is the leaderboard's row identity,
+       and every page that renders it keeps its own copy (site.css holds only
+       .data-table itself). Same values as leaderboard.html — without them the
+       avatar renders at its natural size and tears the table open. */
+    .lb-author { display: inline-flex; align-items: center; gap: 0.45rem; color: var(--fg); text-decoration: none; border: none; }
+    .lb-avatar { width: 22px; height: 22px; border: 1px solid var(--border); display: block; object-fit: cover; flex-shrink: 0; }
+    .lb-avatar-ph {
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
+      color: var(--muted); background: rgba(0,0,0,0.04);
+    }
+    .lb-flag { font-size: 0.95em; line-height: 1; cursor: default; }
+    .medal { font-size: 1.1em; line-height: 1; }
+    .sp-adv {
+      font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.08em;
+      color: var(--blue); margin-left: 0.5rem; white-space: nowrap; vertical-align: middle;
+    }
+    tr.is-adv td { background: color-mix(in srgb, var(--blue) 6%, var(--bg)); }
+    tr.is-adv:hover td { background: color-mix(in srgb, var(--blue) 11%, var(--bg)); }
+    /* Podium rows: a wash of the medal's own hue, kept far enough down in
+       saturation that the table still reads as data rather than decoration.
+       color-mix against --bg so it inverts correctly with the theme instead of
+       being a hardcoded pale tint that goes muddy on a dark ground. */
+    tr.is-gold   td { background: color-mix(in srgb, #d4af37 13%, var(--bg)); }
+    tr.is-silver td { background: color-mix(in srgb, #9aa3ad 13%, var(--bg)); }
+    tr.is-bronze td { background: color-mix(in srgb, #b87333 12%, var(--bg)); }
+    tr.is-gold:hover td   { background: color-mix(in srgb, #d4af37 20%, var(--bg)); }
+    tr.is-silver:hover td { background: color-mix(in srgb, #9aa3ad 20%, var(--bg)); }
+    tr.is-bronze:hover td { background: color-mix(in srgb, #b87333 19%, var(--bg)); }
+    /* the podium's first cell carries the accent as a spine, echoing .pm-row */
+    tr.is-gold   td.rank { box-shadow: inset 3px 0 0 #d4af37; }
+    tr.is-silver td.rank { box-shadow: inset 3px 0 0 #9aa3ad; }
+    tr.is-bronze td.rank { box-shadow: inset 3px 0 0 #b87333; }
+    .data-table td.rank { white-space: nowrap; }
+
+    .sp-st td, .sp-st th { white-space: nowrap; }
+    .sp-st .sp-bot { white-space: normal; }
+    .sp-score { font-weight: 700; color: var(--fg); }
+    .sp-of { color: var(--muted); font-weight: 400; }
+    .sp-tb {
+      font-family: var(--font-mono); font-size: 0.55rem; font-weight: 700; letter-spacing: 0.08em;
+      color: var(--muted); margin-left: 0.3rem; cursor: help; vertical-align: super;
+    }
+    .sp-prior { color: var(--muted); }
+    /* the bootstrap interval reads as a qualifier on the score, not as a score */
+    .sp-warn { color: var(--red); cursor: help; margin-left: 0.3rem; }
+    .sp-rec .w { color: #15803d; font-weight: 700; }
+    .sp-rec .l { color: var(--red); font-weight: 700; }
+    .sp-rec .d { color: var(--muted); font-weight: 700; }
+
+    /* ---- cross table: one score per cell, tinted by who took the pair ---- */
+    /* Centre the grid in its scroll box: the 6- and 10-bot grids are much
+       narrower than the page, and left-aligned they read as though they had
+       come loose from the section above. margin:auto only centres while it
+       FITS — the 22-bot grid overflows and scrolls from the left edge. */
+    .sp-cross { border-collapse: collapse; font-family: var(--font-mono); font-size: 0.72rem; margin-inline: auto; }
+    .sp-cross th, .sp-cross td { border: 1px solid var(--border); padding: 0.34rem 0.4rem; text-align: center; }
+    .sp-cross thead th { font-size: 0.6rem; color: var(--muted); font-weight: 600; }
+    .sp-cross th.sp-rowh { text-align: left; white-space: nowrap; font-weight: 500; color: var(--fg); font-size: 0.7rem; }
+    .sp-cross th.sp-rowh .sp-rn { color: var(--muted); margin-right: 0.4rem; }
+    .sp-cross td { font-variant-numeric: tabular-nums; cursor: pointer; }
+    .sp-cross td.sp-diag { background: repeating-linear-gradient(45deg, transparent, transparent 3px, var(--border) 3px, var(--border) 4px); color: transparent; cursor: default; }
+    .sp-cross td.sp-tot { background: var(--bg); font-weight: 700; cursor: default; }
+    /* Finals cells carry no match list, so they must not look clickable. */
+    .sp-cross td.sp-nc { cursor: default; }
+    /* Shared place: the "=" sits beside the rank so two rows on one place read
+       as deliberate rather than as a rendering fault. */
+    .sp-eq { font-weight: 700; color: var(--muted); margin-left: 0.15rem; }
+    /* Prize money reads as an outcome, not as another statistic — hence the
+       display face against the mono of the columns beside it. */
+    .sp-prize b { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.01em; color: var(--fg); }
+    .sp-nopay { color: var(--muted); opacity: 0.5; }
+
+    /* ---- matches ---- */
+    .sp-controls { display: flex; gap: 0.7rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+    .sp-controls .fz-search { width: auto; min-width: 15rem; flex: 1; }
+    .sp-chip {
+      display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-mono);
+      font-size: 0.66rem; padding: 0.3rem 0.5rem; border: 1px solid var(--fg); color: var(--fg);
+    }
+    .sp-chip button { background: transparent; border: 0; color: var(--muted); cursor: pointer; font: inherit; padding: 0; }
+    .sp-chip button:hover { color: var(--fg); }
+    /* result chips: filled green W on the winner, outlined red L on the loser,
+       muted D on both for a draw — same idiom as /replays, which keeps its own
+       copy too (site.css carries the viewer chrome, not these). */
+    .rb-res {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 1.05rem; height: 1.05rem; margin-right: 0.45rem;
+      font-size: 0.6rem; font-weight: 700; line-height: 1;
+      vertical-align: text-bottom; flex-shrink: 0;
+    }
+    .rb-res.w { background: #15803d; color: #fff; }
+    .rb-res.l { color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
+    .rb-res.d { color: var(--muted); box-shadow: inset 0 0 0 1px var(--border); }
+    .sp-mt td { white-space: nowrap; }
+    .sp-mt td.sp-p { width: 30%; }
+    .sp-dot { display: inline-block; width: 0.5rem; height: 0.5rem; margin-right: 0.45rem; vertical-align: baseline; flex-shrink: 0; }
+    .sp-dot.p0 { background: var(--blue); }
+    .sp-dot.p1 { background: var(--red); }
+    .sp-mt .sp-name { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--border); }
+    .sp-mt .sp-name:hover { border-bottom-color: var(--fg); }
+    .sp-more { margin-top: 1rem; }
+    .sp-more button {
+      font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+      background: transparent; color: var(--fg); border: 1px solid var(--fg); padding: 0.45rem 0.9rem; cursor: pointer;
+    }
+    .sp-more button:hover { background: var(--fg); color: var(--bg); }
+
+    /* ---- "the standings are not certified": the report writes blockers when
+       its own rules say a placing cannot be published. Loud on purpose — a
+       provisional table that reads as final is the one failure this page can
+       cause. ---- */
+    .sp-block { border: 1px solid var(--red); border-left-width: 3px; padding: 0.9rem 1.1rem; margin-bottom: 2rem; }
+    .sp-block-t {
+      font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--red); font-weight: 700; margin-bottom: 0.5rem;
+    }
+    .sp-block ul { margin: 0 0 0.5rem 1.1rem; }
+    .sp-block li, .sp-block p { font-family: var(--font-mono); font-size: 0.74rem; line-height: 1.6; color: var(--fg); }
+
+    /* ---- replay viewer: all chrome is shared (assets/site.css). It stays
+       hidden until a game is picked — /replays opens on a match, this page
+       opens on a table, and an idle 68vh stage would push the standings and the
+       match list a full screen apart for a viewer who never watches anything. */
+    /* Viewer beside its list, the same split /player uses: picking a game and
+       watching it are one activity, and stacking them put a full screen between
+       the click and the board. */
+    .sp-play { display: grid; grid-template-columns: 1.45fr 1fr; gap: 2rem; align-items: start; }
+    .sp-play-main, .sp-play-side { min-width: 0; }
+    .sp-play-side .sp-mlist { border: 1px solid var(--border); max-height: min(62vh, 34rem); overflow-y: auto; }
+    @supports (height: 1dvh) { .sp-play-side .sp-mlist { max-height: min(62dvh, 34rem); } }
+    @media (max-width: 900px) { .sp-play { grid-template-columns: 1fr; } }
+    .sp-mrow {
+      display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.7rem;
+      border-bottom: 1px solid var(--border); border-left: 3px solid transparent;
+      font-family: var(--font-mono); font-size: 0.74rem; cursor: pointer;
+    }
+    .sp-mrow:last-child { border-bottom: none; }
+    .sp-mrow:hover { background: rgba(0,0,0,0.03); }
+    .sp-mrow.is-active { border-left-color: var(--fg); background: rgba(0,0,0,0.05); }
+    .sp-mnames { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sp-mvs { color: var(--muted); margin: 0 0.3rem; }
+    .sp-mmeta { margin-left: auto; color: var(--muted); font-size: 0.66rem; white-space: nowrap; flex-shrink: 0; }
+    .sp-mmeta .sp-mid { opacity: 0.55; }
+    /* which round a listed game belongs to — a pooled pair's list mixes R1
+       and R2 games, and the reader has to be able to tell them apart */
+    .sp-mmeta .sp-mst { font-weight: 700; letter-spacing: 0.08em; }
+    .sp-mwin { font-weight: 700; }
+    .sp-viewer { display: flex; flex-direction: column; margin-bottom: 1.6rem; }
+    .sp-viewer[hidden] { display: none; }
+    .sp-viewer .replay-viewer-stage { height: min(56vh, 30rem); }
+    @supports (height: 1dvh) { .sp-viewer .replay-viewer-stage { height: min(56dvh, 30rem); } }
+  </style>
+</head>
+<body class="page">
+  <!-- No current="results": /results is not in NAV_ITEMS, and an attribute
+       that matches no item would just render an un-highlighted nav anyway. -->
+  <site-nav></site-nav>
+
+  <main class="page-main">
+    <!-- Static copy mirrors CFG in the module below (the single place the
+         page's wording is meant to be edited); the module re-applies CFG here
+         on load so the two cannot drift, and this stays for no-JS readers. -->
+    <header class="page-hero">
+      <p class="eyebrow">Marathon · Final</p>
+      <h1>Marathon Tournament</h1>
+      <p>The archived Marathon checkpoints, played head-to-head over three rounds: every pair, the same maps, both sides.</p>
+    </header>
+
+    <div id="sp"><p class="sp-loading">Loading results…</p></div>
+  </main>
+
+  <site-footer></site-footer>
+
+  <script src="/board.js"></script>
+  <script src="/assets/site.js" defer></script>
+  <script type="module">
+    const root = document.getElementById('sp');
+    const { esc, MEDALS, countryFlag, fuzzy, hiMatch } = window.GC; // shared helpers (assets/site.js)
+
+    // Everything that names THIS tournament, in one place. The rendering below
+    // is the Sprint page's, adapted to the three-stage artifact; what differs
+    // between the two events — the wording, the file, the prize table — is
+    // here and nowhere else.
+    const CFG = {
+      NAME: 'Marathon',
+      EYEBROW: 'Marathon · Final',
+      TITLE: 'Marathon Tournament',
+      HERO: 'The archived Marathon checkpoints, played head-to-head over three rounds: every pair, the same maps, both sides.',
+      // The results artifact is static, immutable and date-stamped — there is
+      // no API function behind this page, and nothing here is ever recomputed
+      // in the browser: the ranking a competitor reads is byte-for-byte the one
+      // scripts/build_marathon.mjs committed.
+      DATA_URL: '/assets/marathon-2026-09-01.json',
+      // artifact stage id -> the heading it is shown under
+      STAGE: { qualifier: 'Round 1', final: 'Round 2', deep: 'Finals' },
+      STAGE_SHORT: { qualifier: 'R1', final: 'R2', deep: 'F' },
+      // Marathon prize money, keyed by PLACE: a shared place pays each of them
+      // in full rather than splitting one between them.
+      PRIZE: { 1: 10000, 2: 3000, 3: 1000 },
+      BLOCK_TITLE: 'The final standings are not certified',
+      BLOCK_NOTE: 'The standings below are what was played; the places and the prize money are not final until these are resolved.',
+      LOCKED_TITLE: 'Not published yet',
+      LOCKED_NOTE: 'The Marathon checkpoints have been archived, but the final tournament between them hasn\'t been '
+        + 'published. Until it is, the <a href="/leaderboard">live leaderboard</a> is the current ranking — it decides who '
+        + 'qualifies, not who wins.',
+    };
+    const DATA_URL = CFG.DATA_URL;
+    // ?data= preview hook, restricted to a same-origin relative .json path. It
+    // exists so the page can be walked against tests/marathon.fixture.json; the
+    // pattern is what stops it from becoming an open fetch proxy, and every
+    // value rendered below is escaped regardless. The second character may not
+    // be another slash: "//host/x.json" is a protocol-relative URL, i.e. a
+    // cross-origin fetch wearing a relative path.
+    const wanted = new URLSearchParams(location.search).get('data') || '';
+    const SRC = /^\/[A-Za-z0-9._-][A-Za-z0-9._/-]*\.json$/.test(wanted) ? wanted : DATA_URL;
+
+    // Keep the static hero and CFG from drifting: CFG is where the copy is
+    // edited, the markup is what a crawler and a no-JS reader see.
+    {
+      const hero = document.querySelector('.page-hero');
+      if (hero) {
+        const set = (sel, text) => { const el = hero.querySelector(sel); if (el) el.textContent = text; };
+        set('.eyebrow', CFG.EYEBROW); set('h1', CFG.TITLE); set('h1 + p', CFG.HERO);
+      }
+    }
+
+    const PAGE = 200;              // match rows drawn before the "show all" cut
+    // pair: a "keyA|keyB" filter from a cross-table cell; stage: which round's
+    // games to keep for it (null = every listed game of the pair, i.e. the
+    // pooled round 2 view).
+    const state = { q: '', pair: null, stage: null, shown: PAGE, watching: null };
+    let D = null;                  // the artifact, verbatim
+    let keyOf = new Map();         // bot name -> content key (matches[] carries names only)
+    let warned = new Set();        // bots with a fault storm that survived the isolated re-run
+    let player = null, current = null;
+
+    const n1 = (v) => (Math.round(Number(v) * 10) / 10).toString();
+    // Percentages keep the decimal even when it is zero — "80%" beside "77.5%"
+    // reads as a different precision rather than the same measurement.
+    const pct1 = (v) => `${(Math.round(Number(v) * 10) / 10).toFixed(1)}%`;
+    const int = (v) => String(Math.round(Number(v) || 0));
+    // Thousands-grouped: 13,920 games is a headline, 13920 is a file size.
+    const fmtN = (v) => Math.round(Number(v) || 0).toLocaleString('en-US');
+    const money = (v) => `$${Number(v).toLocaleString('en-US')}`;
+    const ordinal = (n) => {
+      n = Math.round(Number(n) || 0);
+      const s = ['th', 'st', 'nd', 'rd'], v = n % 100;
+      return `${n}${s[(v - 20) % 10] || s[v] || s[0]}`;
+    };
+    const nameLink = (nm) => `<a class="sp-name" href="/player/?name=${encodeURIComponent(nm)}" title="View ${esc(nm)}'s profile">${esc(nm)}</a>`;
+    const stageOf = (id) => (D.stages || {})[id] || {};
+
+    // ---- headline -----------------------------------------------------------
+    // The report writes `blockers` when its own rules say a placing cannot be
+    // certified — an errored pair, an unresolved tie, or a flipped game on a
+    // cut. It still emits the artifact, so the page is the last place that can
+    // stop a provisional table from reading as a final one. Any of the three
+    // rounds can block: a flipped game on round 1's 10/11 line is as much a
+    // problem for the field as one on the podium.
+    let blocked = [];
+
+    function blockedHtml() {
+      if (!blocked.length) return '';
+      return `
+        <div class="sp-block">
+          <p class="sp-block-t">${esc(CFG.BLOCK_TITLE)}</p>
+          <ul>${blocked.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>
+          <p>${esc(CFG.BLOCK_NOTE)}</p>
+        </div>`;
+    }
+
+    function headHtml() {
+      const run = D.run || {};
+      const st = D.stages || {};
+      // Champion comes from the FINALS, which is the round that decides places.
+      const champ = (D.standings_r3 && D.standings_r3[0]) || null;
+      // Totals across all three rounds: "the size of the whole evaluation".
+      // Each stage's games_total is the games it ADDED (the later rounds pool
+      // the earlier ones), so the sum is the number of distinct games played;
+      // the build script writes that sum down as games_total_all_stages.
+      const bots = (D.standings_r1 || []).length;
+      const stageIds = ['qualifier', 'final', 'deep'].filter((k) => st[k]);
+      const games = Number.isFinite(run.games_total_all_stages)
+        ? run.games_total_all_stages
+        : stageIds.reduce((n, k) => n + (st[k].games_total || 0), 0);
+      const counts = [[bots, 'bots'], [stageIds.length, 'rounds'], [games, 'games']];
+      const prize = champ && CFG.PRIZE[champ.rank];
+      return `
+        <section class="sp-top">
+          <div>
+            <p class="sp-k">Champion</p>
+            ${champ ? `
+              <p class="sp-champ-name"><span class="medal">${MEDALS[0]}</span>${nameLink(champ.name)}</p>
+              <p class="sp-champ-sub"><b>${n1(champ.score)}</b> of ${fmtN(champ.games)} points in the ${esc(CFG.STAGE.deep)} ·
+                ${int(champ.wins)}W ${int(champ.losses)}L ${int(champ.draws)}D${prize ? ` · <b>${money(prize)}</b>` : ''}</p>`
+              : '<p class="sp-champ-name">—</p><p class="sp-champ-sub">Standings withheld.</p>'}
+          </div>
+          <div class="sp-counts">
+            ${counts.map(([v, k]) => `<div><b class="sp-num">${fmtN(v)}</b><span class="sp-k">${k}</span></div>`).join('')}
+          </div>
+        </section>`;
+    }
+
+    // ---- row identity, shared by the three standings tables -----------------
+    // Avatar + flag, identical to the leaderboard's treatment. Falls back to the
+    // initial when a player has no picture, so the column never collapses.
+    const avaFor = (r) => (r.avatar_url
+      ? `<img class="lb-avatar" src="${esc(r.avatar_url)}" alt="" loading="lazy" />`
+      : `<span class="lb-avatar lb-avatar-ph">${esc((r.name || '?').trim().charAt(0).toUpperCase())}</span>`);
+    const flagFor = (r) => {
+      const f = countryFlag(r.country);
+      return f ? ` <span class="lb-flag" title="${esc(r.country)}">${f}</span>` : '';
+    };
+    const warnFor = (r) => (warned.has(r.key)
+      ? '<span class="sp-warn" title="This bot missed moves against a specific opponent, and the problem repeated when the pair was replayed alone — so it is the bot, not the machine. Per-game counts are in the match list.">⚠</span>'
+      : '');
+    const botCell = (r, chip = '') => `<span class="lb-author">${avaFor(r)}${nameLink(r.name)}${flagFor(r)}</span>${chip}${warnFor(r)}`;
+    const tbFor = (r) => (r.tiebreak_used
+      ? `<span class="sp-tb" title="Tied on score — separated by ${esc(r.tiebreak_used)}">${esc(String(r.tiebreak_used).split('-').map((w) => w[0]).join('').toUpperCase())}</span>`
+      : '');
+    const scoreCell = (r) => `<td class="num"><span class="sp-score">${n1(r.score)}</span><span class="sp-of">/${int(r.games)}</span>${tbFor(r)}</td>`;
+    const recordCell = (r) => `<td class="sp-rec"><span class="w">${int(r.wins)}W</span> <span class="l">${int(r.losses)}L</span> <span class="d">${int(r.draws)}D</span></td>`;
+    const podium = (rank) => ['is-gold', 'is-silver', 'is-bronze'][rank - 1] || '';
+
+    // Round 1's Elo for a bot, by content key. The later rounds deliberately
+    // show none of their own: ten or six bots playing only each other give a
+    // solve no connection to the field, and the anchor is not among them.
+    const elo1 = (key) => {
+      const r = (D.standings_r1 || []).find((x) => x.key === key);
+      return r && Number.isFinite(r.elo) ? int(r.elo) : '—';
+    };
+    const ELO_TITLE = 'Elo from round 1, where every bot played every other. The later rounds\' bots played only each other, so a rating solved inside that block has nothing to tie it to the field.';
+    const SB_TITLE = 'The sum of the scores of every opponent you beat, plus half for each draw. Ranks tied bots by WHO they beat — beating the champion counts for more than beating last place. First declared tie-break.';
+
+    // ---- Finals ---------------------------------------------------------------
+    // The round that decides places, rendered first because it is the final
+    // word; rounds 2 and 1 stay below as the record of how the field was
+    // narrowed. A contested place the bootstrap cannot separate is a DECLARED
+    // TIE, not a tie-break: equal rows share the place, the next place skips,
+    // and the note under the table says why.
+    function finalsHtml() {
+      const rows = D.standings_r3 || [];
+      if (!rows.length) return '';
+      const st = stageOf('deep');
+      const body = rows.map((r) => {
+        const eq = r.tied ? '<span class="sp-eq" title="Tied — both take this place">=</span>' : '';
+        const rankInner = (r.rank <= 3
+          ? `<span class="medal" title="Rank ${int(r.rank)}">${MEDALS[r.rank - 1]}</span>`
+          : int(r.rank)) + eq;
+        return `
+          <tr class="${podium(r.rank)}">
+            <td class="rank${r.rank <= 3 ? ' rank-top' : ''}">${rankInner}</td>
+            <td class="sp-bot">${botCell(r)}</td>
+            ${scoreCell(r)}
+            ${recordCell(r)}
+            <td class="num">${pct1(r.win_pct)}</td>
+            <td class="num sp-prior">${r.prior_rank != null ? int(r.prior_rank) : '—'}</td>
+            <td class="num sp-prior">${elo1(r.key)}</td>
+            <td class="num sp-prize">${CFG.PRIZE[r.rank] ? `<b>${money(CFG.PRIZE[r.rank])}</b>` : '<span class="sp-nopay">—</span>'}</td>
+          </tr>`;
+      }).join('');
+      return `
+        <section class="sp-sec">
+          <h2 class="sp-h">${esc(CFG.STAGE.deep)}
+            <span class="sp-legend">final standings · the top ${int(st.bots || rows.length)} over ${int(st.maps)} maps,
+              ${int(st.games_per_pair)} games a pair pooled with rounds 1 and 2 · win 1, draw ½</span></h2>
+          <div class="sp-scroll"><table class="data-table sp-st" aria-label="Finals standings">
+            <thead><tr><th class="rank">#</th><th>Bot</th><th class="num">Score</th>
+              <th>Record</th><th class="num">Win %</th>
+              <th class="num" title="Place after round 2">R2</th>
+              <th class="num" title="${esc(ELO_TITLE)}">Elo</th>
+              <th class="num" title="Marathon prize money. A shared place pays each player in full — it is not split between them.">Prize</th></tr></thead>
+            <tbody>${body}</tbody>
+          </table></div>
+        </section>`;
+    }
+
+    // ---- cross tables ---------------------------------------------------------
+    // cross[a][b] may only be stored one way round (the report writes the pair
+    // once), so a missing cell is reconstructed from its mirror rather than
+    // rendered blank. BOTH lookups read the grid being rendered — pointing the
+    // forward one at a fixed grid once made a round 1 table show round 2 scores
+    // wherever a pair existed in both.
+    let CROSS = null;   // the grid `cell()` reads — set per render
+    function cell(a, b) {
+      const fwd = (CROSS[a] || {})[b];
+      if (fwd) return fwd;
+      const rev = (CROSS[b] || {})[a];
+      if (!rev) return null;
+      const games = rev.w + rev.l + rev.d;
+      return { score: games - rev.score, w: rev.l, l: rev.w, d: rev.d, faults: [rev.faults[1], rev.faults[0]] };
+    }
+
+    // The match list holds every game of all three rounds, once. The pooled
+    // tables (Round 2, Finals) therefore filter by pair alone and get exactly
+    // the games their cells count; Round 1's cells are stamped with `stage`
+    // so a top-10 pair's cell shows its 20 round-1 games, not the 560 it has
+    // listed overall. `clickable: false` is kept for an artifact that ships a
+    // grid without its games — such a cell must not look like a filter.
+    function crossHtml({ rows, cross, faults, perPair, label, legend, clickable = true, stage = null } = {}) {
+      rows = rows || [];
+      if (rows.length < 2 || !cross) return '';
+      CROSS = cross;
+      const body = rows.map((r) => {
+        const cells = rows.map((c) => {
+          if (c.key === r.key) return '<td class="sp-diag">·</td>';
+          const x = cell(r.key, c.key);
+          if (!x) return '<td class="sp-diag">·</td>';
+          const f = ((faults || {})[r.key] || {})[c.key];
+          const fv = Number.isFinite(f) ? f : (x.faults ? x.faults[0] : 0);
+          // score → blue when the row bot took the pair, red when it lost it.
+          // Mixed into var(--bg), not into `transparent`: mixing with
+          // transparent yields a semi-transparent ink that goes muddy against
+          // the striped diagonal and inverts wrongly on a dark ground. Capped
+          // at 42% so --fg text stays readable on the strongest cell.
+          const frac = x.score / perPair;
+          const pct = Math.round(Math.abs(frac - 0.5) * 2 * 42);
+          const t = pct < 4 ? '' : `background:color-mix(in srgb, var(--${frac > 0.5 ? 'blue' : 'red'}) ${pct}%, var(--bg))`;
+          const title = `${r.name} vs ${c.name} — ${n1(x.score)}/${perPair} (${x.w}W ${x.l}L ${x.d}D), faults ${fv}`;
+          const attrs = clickable
+            ? `data-pair="${esc([r.key, c.key].sort().join('|'))}"${stage ? ` data-stage="${esc(stage)}"` : ''}`
+            : 'class="sp-nc"';
+          return `<td ${attrs} style="${t}" title="${esc(title)}">${n1(x.score)}</td>`;
+        }).join('');
+        return `<tr><th class="sp-rowh" scope="row"><span class="sp-rn">${int(r.rank)}</span>${esc(r.name)}</th>${cells}
+          <td class="sp-tot">${n1(r.score)}</td></tr>`;
+      }).join('');
+      return `
+        <section class="sp-sec">
+          <h2 class="sp-h">${esc(label)}
+            <span class="sp-legend">${esc(legend || `row bot's points out of ${perPair} against the column bot${clickable ? ' · click a cell for the games' : ''}`)}</span>
+          </h2>
+          <div class="sp-scroll">
+            <table class="sp-cross" aria-label="${esc(label)}">
+              <thead><tr><th></th>${rows.map((c) => `<th title="${esc(c.name)}" scope="col">${int(c.rank)}</th>`).join('')}<th>Σ</th></tr></thead>
+              <tbody>${body}</tbody>
+            </table>
+          </div>
+        </section>`;
+    }
+
+    // ---- Round 2 ------------------------------------------------------------
+    // The top 10, POOLED with their round 1 games: the 60-a-pair score includes
+    // the 20 already played, which is why the legend says so in as many words —
+    // two denominators in one column are otherwise unexplained.
+    function roundTwoHtml() {
+      const rows = D.standings || [];
+      if (!rows.length) return '';
+      const st = stageOf('final'), q = stageOf('qualifier');
+      const fresh = Number.isFinite(st.maps) && Number.isFinite(q.maps) ? st.maps - q.maps : st.maps;
+      const nAdv = Number.isFinite(st.advance) ? st.advance : rows.filter((r) => r.advanced).length;
+      const body = rows.map((r) => `
+          <tr class="${r.advanced ? 'is-adv' : ''}">
+            <td class="rank">${int(r.rank)}</td>
+            <td class="sp-bot">${botCell(r, r.advanced ? `<span class="sp-adv" title="Advanced to the ${esc(CFG.STAGE.deep)}">→ ${esc(CFG.STAGE.deep)}</span>` : '')}</td>
+            ${scoreCell(r)}
+            ${recordCell(r)}
+            <td class="num">${pct1(r.win_pct)}</td>
+            <td class="num">${n1(r.sb)}</td>
+            <td class="num sp-prior">${r.prior_rank != null ? int(r.prior_rank) : '—'}</td>
+            <td class="num sp-prior">${elo1(r.key)}</td>
+          </tr>`).join('');
+      return `
+        <section class="sp-sec">
+          <h2 class="sp-h">${esc(CFG.STAGE.final)}
+            <span class="sp-legend">the top ${int(st.bots || rows.length)} on ${int(fresh)} fresh maps ·
+              ${int(st.games_per_pair)} games a pair, pooled with round 1 · win 1, draw ½ · the top ${int(nAdv)} advance</span></h2>
+          <div class="sp-scroll"><table class="data-table sp-st" aria-label="Round 2 standings">
+            <thead><tr><th class="rank">#</th><th>Bot</th><th class="num">Score</th><th>Record</th>
+              <th class="num">Win %</th>
+              <th class="num" title="${esc(SB_TITLE)}">Sonneborn-Berger</th>
+              <th class="num" title="Place after round 1">R1</th>
+              <th class="num" title="${esc(ELO_TITLE)}">Elo</th>
+            </tr></thead>
+            <tbody>${body}</tbody>
+          </table></div>
+        </section>`;
+    }
+
+    // ---- Round 1 ------------------------------------------------------------
+    // The full field, kept as its own table so a finalist's record against all
+    // 22 survives — a single merged list would show the six only at finals
+    // depth and drop how they did against everyone else.
+    function roundOneHtml() {
+      const rows = D.standings_r1 || [];
+      if (!rows.length) return '';
+      const st = stageOf('qualifier');
+      const nAdv = Number.isFinite(st.advance) ? st.advance : rows.filter((r) => r.advanced).length;
+      const body = rows.map((r) => `
+          <tr class="${r.advanced ? 'is-adv' : ''}">
+            <td class="rank">${int(r.rank)}</td>
+            <td class="sp-bot">${botCell(r, r.advanced ? `<span class="sp-adv" title="Advanced to ${esc(CFG.STAGE.final)}">→ ${esc(CFG.STAGE_SHORT.final)}</span>` : '')}</td>
+            ${scoreCell(r)}
+            ${recordCell(r)}
+            <td class="num">${pct1(r.win_pct)}</td>
+            <td class="num">${n1(r.sb)}</td>
+            <td class="num sp-prior">${Number.isFinite(r.elo) ? int(r.elo) : '—'}</td>
+          </tr>`).join('');
+      return `
+        <section class="sp-sec">
+          <h2 class="sp-h">${esc(CFG.STAGE.qualifier)}
+            <span class="sp-legend">all ${int(rows.length)} checkpoints, every pair over ${int(st.maps)} maps from both sides ·
+              ${int(st.games_per_pair)} games a pair · the top ${int(nAdv)} advance</span></h2>
+          <div class="sp-scroll"><table class="data-table sp-st" aria-label="Round 1 standings">
+            <thead><tr><th class="rank">#</th><th>Bot</th><th class="num">Score</th>
+              <th>Record</th><th class="num">Win %</th>
+              <th class="num" title="${esc(SB_TITLE)}">Sonneborn-Berger</th>
+              <th class="num" title="Elo solved over round 1, the only round in which every bot met every other.">Elo</th></tr></thead>
+            <tbody>${body}</tbody>
+          </table></div>
+        </section>`;
+    }
+
+    // ---- adjudication ----------------------------------------------------------
+    // The audit trail itself (per-game rulings, flipped games) stays in the
+    // artifact and the run directories; what the page owes a reader is the
+    // one sentence that matters: whether any placing rests on a fault storm.
+    function adjudicationHtml() {
+      const per = [['qualifier', D.adjudication_r1], ['final', D.adjudication], ['deep', D.adjudication_r3]]
+        .filter(([, a]) => a && typeof a === 'object');
+      if (!per.length) return '';
+      const reproduced = per.reduce((n, [, a]) => n + (Number(a.reproduced) || 0), 0);
+      const lines = per.map(([k, a]) => `<br>${esc(CFG.STAGE[k])}: <b>${int(a.reruns != null ? a.reruns : a.quarantined_pairs)}</b> of ${int(a.pair_blocks)} pair-blocks re-run in isolation · <b>${int(a.reproduced)}</b> reproduced`
+        + (Number(a.excluded_games) ? ` · ${int(a.excluded_games)} excluded` : '')).join('');
+      const verdict = reproduced === 0
+        ? 'No fault storm survived isolation, so <b>no bot\'s placing was fault-driven</b>: every re-run pair was banked clean.'
+        : `<b>${int(reproduced)}</b> pairing(s) kept their storm under isolation — a property of the bots involved, not of the machine — and are marked ⚠ above.`;
+      return `
+        <section class="sp-sec">
+          <h2 class="sp-h">Adjudication
+            <span class="sp-legend">a fault is a move a bot missed, crashed on, or garbled — 3+ on a side sends the whole pair-block back to be replayed alone on a worker</span></h2>
+          <p class="sp-note">${verdict}${lines}</p>
+        </section>`;
+    }
+
+    // ---- matches ------------------------------------------------------------
+    function filtered() {
+      let rows = (D.matches || []).map((m, i) => ({ m, i, a: null, b: null }));
+      if (state.pair) rows = rows.filter((r) => r.m.pair === state.pair);
+      if (state.stage) rows = rows.filter((r) => r.m.stage === state.stage);
+      const q = state.q.trim().toLowerCase();
+      if (q) {
+        rows = rows
+          .map((r) => {
+            const a = fuzzy(r.m.p0_name, q), b = fuzzy(r.m.p1_name, q);
+            return { ...r, a, b, score: Math.max(a ? a.score : -Infinity, b ? b.score : -Infinity) };
+          })
+          .filter((r) => r.score > -Infinity)
+          .sort((x, y) => y.score - x.score || x.i - y.i);
+      }
+      return rows;
+    }
+
+    const nameForKey = (k) => {
+      const s = (D.standings_r1 || []).find((x) => x.key === k) || (D.standings || []).find((x) => x.key === k);
+      return s ? s.name : k;
+    };
+
+    function matchesInnerHtml() {
+      const rows = filtered();
+      const total = (D.matches || []).length;
+      const page = rows.slice(0, state.shown);
+      const chip = state.pair
+        ? (() => {
+            const [a, b] = state.pair.split('|');
+            const which = state.stage ? ` · ${esc(CFG.STAGE[state.stage] || state.stage)}` : '';
+            return `<span class="sp-chip">${esc(nameForKey(a))} vs ${esc(nameForKey(b))}${which} <button data-clear-pair title="Show all pairs">✕</button></span>`;
+          })()
+        : '';
+      // Compact rows, not a wide table: the list lives in a narrow column
+      // beside the board, and a row's job is to be picked, not to be read.
+      const body = page.map(({ m, i, a, b }) => {
+        const p0w = m.winner === 'p0', p1w = m.winner === 'p1';
+        const watchable = !!(m.replay_gz || m.replay);
+        const active = state.watching === i;
+        const st = CFG.STAGE_SHORT[m.stage];
+        return `
+          <div class="sp-mrow${active ? ' is-active' : ''}"
+               ${watchable ? `data-watch="${i}" role="button" tabindex="0"` : ''}
+               title="${esc(`${m.p0_name} vs ${m.p1_name} — map ${m.seed}, ${m.turns} turns`)}${watchable ? ' · click to watch' : ''}">
+            <span class="sp-mnames"><span class="${p0w ? 'sp-mwin' : ''}">${hiMatch(m.p0_name, a)}</span><span class="sp-mvs">vs</span><span class="${p1w ? 'sp-mwin' : ''}">${hiMatch(m.p1_name, b)}</span></span>
+            <span class="sp-mmeta">${st ? `<span class="sp-mst">${esc(st)}</span> · ` : ''}${int(m.turns)} turns · <span class="sp-mid">#${int(m.seed)}</span></span>
+          </div>`;
+      }).join('');
+      return `
+        <div class="sp-controls">
+          <input class="fz-search" id="spSearch" type="search" placeholder="Filter by bot…" aria-label="Filter matches by bot" value="${esc(state.q)}" />
+          ${chip}
+          <span class="fz-count">${rows.length === total ? `${total} games` : `${rows.length} / ${total}`}</span>
+        </div>
+        <div class="sp-mlist" aria-label="Every listed game">
+          ${body || '<p class="sp-empty">No games match that filter.</p>'}
+        </div>
+        ${rows.length > page.length ? `<p class="sp-more"><button data-more>Show all ${rows.length} games</button></p>` : ''}`;
+    }
+
+    function matchesHtml() {
+      const hasReplays = (D.matches || []).some((m) => m.replay_gz || m.replay);
+      const deep = stageOf('deep');
+      return `
+        <section class="sp-sec">
+          <h2 class="sp-h">Every game
+            <span class="sp-legend">all three rounds, every game once · click a cross-table cell to see one pair</span></h2>
+          <div class="sp-play">
+            <div class="sp-play-main">${hasReplays ? viewerHtml() : ''}</div>
+            <div class="sp-play-side">
+              <div id="spMatches">${matchesInnerHtml()}</div>
+            </div>
+          </div>
+        </section>`;
+    }
+
+    // ---- replay viewer (markup + wiring mirror /replays; no side-swap logic
+    // here because the artifact is already P0/P1-relative) --------------------
+    function viewerHtml() {
+      return `
+        <div class="sp-viewer" id="spViewer" hidden>
+          <div class="replay-viewer-meta"><span id="spvMeta">Pick a game below →</span><span id="spvTick">Tick 0 / 0</span></div>
+          <div class="replay-score" id="spvScore"></div>
+          <div class="replay-viewer-stage">
+            <div class="replay-board" id="spvBoard"></div>
+            <div id="spvMsg">Published replays are marked <b>▶ watch</b>.</div>
+          </div>
+          <div class="replay-controls">
+            <button id="spvRestart" title="Restart">◀◀</button>
+            <button id="spvPlay" class="ctl-play" title="Play / pause">▶</button>
+            <button id="spvEnd" title="Jump to end">▶▶</button>
+            <input class="rscrub" id="spvScrub" type="range" min="0" max="0" value="0" aria-label="Scrubber" />
+            <button id="spvSpeed" class="ctl-speed" title="Playback speed">1×</button>
+          </div>
+          <div class="replay-hint">
+            <span><kbd>Space</kbd> play / pause</span>
+            <span class="sep">·</span>
+            <span><kbd>←</kbd> <kbd>→</kbd> step a frame</span>
+          </div>
+        </div>`;
+    }
+
+    // ---- shell --------------------------------------------------------------
+    // All three rounds are shown, deepest first, exactly one table each: the
+    // Finals decide places 1–6, round 2 decided 7–10, round 1 decided 11–22.
+    // Nothing is superseded — each later round pools the earlier one, so the
+    // three denominators (560 / 60 / 20) describe one continuous evaluation.
+    function render() {
+      const st = D.stages || {};
+      const gpp = (k, dflt) => (st[k] && st[k].games_per_pair) || dflt;
+      root.innerHTML = headHtml() + blockedHtml()
+        + finalsHtml()
+        // Guarded, NOT passed straight through: crossHtml renders whatever rows
+        // it is handed, and an artifact without a finals grid must produce no
+        // Finals table rather than someone else's grid under that heading.
+        + ((D.standings_r3 && D.cross_r3)
+            ? crossHtml({
+                rows: D.standings_r3, cross: D.cross_r3, faults: D.fault_matrix_deep,
+                perPair: gpp('deep', 560),
+                label: `${CFG.STAGE.deep} cross table`,
+                legend: `row bot's points out of ${gpp('deep', 560)} against the column bot · pooled over all three rounds · click a cell for the games`,
+              })
+            : '')
+        + roundTwoHtml()
+        + ((D.standings && D.cross)
+            ? crossHtml({
+                rows: D.standings, cross: D.cross, faults: D.fault_matrix_final,
+                perPair: gpp('final', 60),
+                label: `${CFG.STAGE.final} cross table`,
+                legend: `row bot's points out of ${gpp('final', 60)} against the column bot, round 1's ${gpp('qualifier', 20)} included · click a cell for the games`,
+              })
+            : '')
+        + roundOneHtml()
+        + ((D.standings_r1 && D.cross_qualifier)
+            ? crossHtml({
+                rows: D.standings_r1, cross: D.cross_qualifier, faults: D.fault_matrix,
+                perPair: gpp('qualifier', 20),
+                label: `${CFG.STAGE.qualifier} cross table`,
+                legend: `row bot's points out of ${gpp('qualifier', 20)} against the column bot · click a cell for the games`,
+                stage: 'qualifier',
+              })
+            : '')
+        + adjudicationHtml()
+        + matchesHtml();
+      if ((D.matches || []).some((m) => m.replay_gz || m.replay)) {
+        wireViewer();
+        autoOpenFirst();
+      }
+    }
+
+    // Open the first watchable game on load, the way /replays and /player do.
+    // A hidden viewer over a list of games reads as "there are no replays" —
+    // the board should be showing something before anything is clicked.
+    // Only on the FIRST render: re-rendering happens on every keystroke in the
+    // filter, and yanking the board back to the top hit would fight the viewer.
+    let autoOpened = false;
+    function autoOpenFirst() {
+      if (autoOpened || !window.__spOpen) return;
+      const i = (D.matches || []).findIndex((m) => m.replay_gz || m.replay);
+      const m = i === -1 ? null : D.matches[i];
+      if (!m) return;
+      autoOpened = true;
+      state.watching = i;
+      document.querySelectorAll('.sp-mrow').forEach((el) => el.classList.toggle('is-active', Number(el.dataset.watch) === i));
+      window.__spOpen(m.replay_gz || m.replay, `${m.p0_name} vs ${m.p1_name}`,
+        [m.p0_name, m.p1_name], `map ${m.seed} · ${m.turns} turns`, false);
+    }
+
+    function renderMatches() {
+      const box = document.getElementById('spMatches');
+      if (!box) return;
+      box.innerHTML = matchesInnerHtml();
+    }
+
+    // ---- replay playback ----------------------------------------------------
+    const SPEEDS = [320, 160, 80, 40], LABELS = ['0.5×', '1×', '2×', '4×'];
+    let speedIdx = 1;
+
+    function wireViewer() {
+      const $ = (id) => document.getElementById(id);
+      const stageMsg = $('spvMsg'), metaEl = $('spvMeta'), tickEl = $('spvTick');
+      const scrub = $('spvScrub'), scoreEl = $('spvScore');
+      const playBtn = $('spvPlay'), speedBtn = $('spvSpeed');
+      const ctrls = [playBtn, $('spvRestart'), $('spvEnd'), speedBtn, scrub];
+      const setControls = (on) => ctrls.forEach((el) => { el.disabled = !on; });
+      // board.js's pause() doesn't repaint, so onFrame alone can't catch a
+      // pause — call this after anything that starts or stops playback.
+      const syncPlay = () => {
+        playBtn.textContent = player.playing ? '❚❚' : '▶';
+        playBtn.title = player.playing ? 'Pause' : 'Play';
+      };
+
+      let scoreRefs = null;
+      function buildScore(names) {
+        scoreEl.innerHTML = names.map((nm, p) => `
+          <div class="rs-row ${p === 0 ? 'rs-blue' : 'rs-red'}">
+            <span class="rs-name">${nameLink(nm)}</span>
+            <span class="rs-stat"><b class="rs-land">0</b> land</span>
+            <span class="rs-stat"><b class="rs-army">0</b> army</span>
+          </div>`).join('');
+        scoreRefs = [...scoreEl.querySelectorAll('.rs-row')].map((row) => ({
+          row, land: row.querySelector('.rs-land'), army: row.querySelector('.rs-army'),
+        }));
+      }
+      function updateScore() {
+        if (!scoreRefs) return;
+        const s = player.stats();
+        if (!s) return;
+        const lead = s.army[0] === s.army[1] ? -1 : (s.army[0] > s.army[1] ? 0 : 1);
+        scoreRefs.forEach((ref, p) => {
+          ref.land.textContent = s.land[p];
+          ref.army.textContent = s.army[p];
+          ref.row.classList.toggle('is-leader', lead === p);
+        });
+      }
+
+      player = window.GeneralsBoard.mountPlayer({
+        container: $('spvBoard'), frameMs: SPEEDS[speedIdx],
+        onFrame: (f, total) => {
+          tickEl.textContent = `Tick ${f} / ${total ? total - 1 : 0}`;
+          scrub.value = String(f);
+          syncPlay();
+          updateScore();
+        },
+      });
+
+      // Loads are serialized and tagged, so rapid clicks can't race: a
+      // superseded load is dropped and the board ends on the LAST game clicked.
+      let loadSeq = 0, chain = Promise.resolve();
+      // scroll defaults ON — clicking a game in the side list should bring the
+      // board to you. The auto-open at page load passes false: scrolling someone
+      // down to the viewer the instant they arrive, before they have seen the
+      // standings, is not what they asked for.
+      window.__spOpen = (url, label, names, sub, scroll = true) => {
+        current = url;
+        const stage = document.getElementById('spViewer');
+        if (stage) stage.hidden = false;
+        buildScore(names);
+        metaEl.textContent = sub ? `${label} · ${sub}` : label;
+        stageMsg.style.display = '';
+        stageMsg.textContent = 'Loading replay…';
+        const token = ++loadSeq;
+        chain = chain.then(async () => {
+          if (token !== loadSeq) return;
+          try {
+            const info = await player.load(url);
+            if (token !== loadSeq) return;
+            stageMsg.style.display = 'none';
+            scrub.max = String(Math.max(0, info.total - 1));
+            scrub.value = '0';
+            setControls(true);
+            player.play();
+            syncPlay();
+          } catch (e) {
+            if (token === loadSeq) {
+              stageMsg.style.display = '';
+              stageMsg.textContent = e && e.message === 'gzip-unsupported'
+                ? 'Replays need a newer browser — iOS/Safari 16.4 or later.'
+                : 'Could not load this replay.';
+            }
+          }
+        });
+        if (scroll && stage && stage.scrollIntoView) stage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      };
+
+      playBtn.addEventListener('click', () => { player.toggle(); syncPlay(); });
+      $('spvRestart').addEventListener('click', () => { player.seek(0); player.play(); syncPlay(); });
+      $('spvEnd').addEventListener('click', () => { player.pause(); player.seek(player.total - 1); syncPlay(); });
+      scrub.addEventListener('input', () => { player.pause(); player.seek(parseInt(scrub.value, 10)); syncPlay(); });
+      speedBtn.addEventListener('click', () => {
+        speedIdx = (speedIdx + 1) % SPEEDS.length;
+        speedBtn.textContent = LABELS[speedIdx];
+        player.setSpeed(SPEEDS[speedIdx]);
+      });
+      document.addEventListener('keydown', (e) => {
+        if (!current) return;
+        const tag = (e.target && e.target.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button') return;
+        if (e.code === 'Space') { e.preventDefault(); player.toggle(); syncPlay(); }
+        else if (e.code === 'ArrowRight') { e.preventDefault(); player.pause(); player.seek(player.frame + 1); syncPlay(); }
+        else if (e.code === 'ArrowLeft') { e.preventDefault(); player.pause(); player.seek(player.frame - 1); syncPlay(); }
+      });
+      setControls(false);
+    }
+
+    // ---- events: delegated on the container, so every re-render stays wired
+    // without re-attaching a single listener ---------------------------------
+    root.addEventListener('click', (e) => {
+      const t = e.target;
+      if (!t || !t.closest) return;
+      const watch = t.closest('[data-watch]');
+      if (watch && window.__spOpen) {
+        const idx = Number(watch.dataset.watch);
+        const m = (D.matches || [])[idx];
+        const src = m && (m.replay_gz || m.replay);
+        if (src) { state.watching = idx; document.querySelectorAll('.sp-mrow').forEach((el) => el.classList.toggle('is-active', Number(el.dataset.watch) === idx)); }
+        if (src) window.__spOpen(src, `${m.p0_name} vs ${m.p1_name}`, [m.p0_name, m.p1_name], `map ${m.seed} · ${m.turns} turns`);
+        return;
+      }
+      const cellEl = t.closest('td[data-pair]');
+      if (cellEl) {
+        state.pair = cellEl.dataset.pair; state.stage = cellEl.dataset.stage || null; state.shown = PAGE;
+        renderMatches();
+        const box = document.getElementById('spMatches');
+        if (box && box.scrollIntoView) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      if (t.closest('[data-clear-pair]')) { state.pair = null; state.stage = null; state.shown = PAGE; renderMatches(); return; }
+      if (t.closest('[data-more]')) { state.shown = Infinity; renderMatches(); return; }
+    });
+
+    root.addEventListener('input', (e) => {
+      if (!e.target || e.target.id !== 'spSearch') return;
+      state.q = e.target.value || '';
+      state.shown = PAGE;
+      renderMatches();
+      // the box is re-rendered with the query, so put the caret back where it was
+      const box = document.getElementById('spSearch');
+      if (box && box.focus) { box.focus(); if (box.setSelectionRange) box.setSelectionRange(box.value.length, box.value.length); }
+    });
+
+    function renderEmpty() {
+      root.innerHTML = `
+        <div class="gc-locked">
+          <p class="gc-locked-title">${esc(CFG.LOCKED_TITLE)}</p>
+          <p class="gc-locked-note">${CFG.LOCKED_NOTE}</p>
+        </div>`;
+    }
+
+    (async () => {
+      try {
+        const res = await fetch(SRC, { cache: 'no-cache' });
+        if (!res.ok) return renderEmpty();
+        D = await res.json();
+        // All three rounds are load-bearing here: a file missing any of them is
+        // not this tournament's artifact, and the locked panel is the honest
+        // rendering of that.
+        if (!D || !Array.isArray(D.matches) || !Array.isArray(D.standings_r1)
+            || !Array.isArray(D.standings) || !Array.isArray(D.standings_r3) || !D.standings_r3.length) return renderEmpty();
+        keyOf = new Map([...D.standings_r1, ...D.standings, ...D.standings_r3].map((s) => [s.name, s.key]));
+        // a ⚠ next to a bot means a fault storm SURVIVED the isolated re-run —
+        // an infra glitch that vanished on the re-run says nothing about the bot.
+        // Per SIDE, not per game: the opponent of a bot that missed 190 moves
+        // committed nothing, and this is the page that publishes prize money.
+        // x_suspect/y_suspect are absent in artifacts written before that split,
+        // so those fall back to flagging the pair.
+        warned = new Set(
+          (D.suspect_games || [])
+            .filter((g) => g.adjudicated === 'reproduced' || g.adjudicated === 'as-played')
+            .flatMap((g) => {
+              const both = g.x_suspect === undefined && g.y_suspect === undefined;
+              return [
+                both || g.x_suspect ? keyOf.get(g.x != null ? g.x : g.p0_name) : null,
+                both || g.y_suspect ? keyOf.get(g.y != null ? g.y : g.p1_name) : null,
+              ];
+            })
+            .filter(Boolean),
+        );
+        blocked = [['qualifier', D.adjudication_r1], ['final', D.adjudication], ['deep', D.adjudication_r3]]
+          .flatMap(([k, a]) => ((a && a.blockers) || []).map((b) => `${CFG.STAGE[k]}: ${String(b)}`));
+        render();
+      } catch {
+        renderEmpty();
+      }
+    })();
+  </script>
+</body>
+</html>

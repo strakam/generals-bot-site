@@ -1,0 +1,360 @@
+:root {
+  --bg: #ffffff;
+  --fg: #0a0a0c;
+  --muted: #6b6b74;
+  --accent: #e23a3a;
+  /* player colors — the engine's replay palette, exact (generals/gui/replay_gui.py):
+     blue rgb(70,100,220), red rgb(220,70,70) */
+  --blue: #4664dc;
+  --red: #dc4646;
+  /* board tiles — exact engine values (generals/gui/rendering.py):
+     plains rgb(230,230,230), mountains rgb(187,187,187), neutral castles rgb(128,128,128) */
+  --neutral-tile: #e6e6e6;
+  --neutral-castle-tile: #808080;
+  --mountain-tile: #bbbbbb;
+  --fog-tile: #4a4f56;
+  --fog-mountain-tile: #767b83;
+  --border: rgba(0, 0, 0, 0.12);
+  --stage-max: 1600px;
+
+  /* Typography
+     - --font-body: Inter — designed for screen readability at small sizes (Linear, Figma, GitHub).
+     - --font-display: Space Grotesk — geometric grotesque with personality, still legible at large sizes.
+     - --font-mono: JetBrains Mono — code, tags, mono labels. Familiar to the dev audience. */
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+a { color: var(--fg); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color .2s; }
+a:hover { border-color: var(--accent); }
+
+.board-bg {
+  --tile-size: min(calc(48vw / var(--cols, 28)), calc(var(--content-height, 80vh) / var(--rows, 16)));
+  position: fixed;
+  top: 50%;
+  left: calc(50% + min(25vw, var(--stage-max) / 4));
+  transform: translate(-50%, -50%);
+  width: calc(var(--tile-size) * var(--cols, 28));
+  height: calc(var(--tile-size) * var(--rows, 16));
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 28), var(--tile-size));
+  grid-template-rows: repeat(var(--rows, 16), var(--tile-size));
+  gap: 0;
+  opacity: 0.95;
+  pointer-events: none;
+  z-index: 0;
+  clip-path: inset(1px);
+}
+.board-bg.fading .tile { opacity: 0; }
+
+.tile {
+  font-family: var(--font-mono);
+  font-size: calc(var(--tile-size) * 0.38);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e6e6e6;
+  /* engine grid (rendering.py draw_channel): 1px left+top lines per tile, in a
+     0.72-brightness shade of the tile's own fill — softer than a flat black grid */
+  --fill: var(--neutral-tile);
+  background: var(--fill);
+  border: 0;
+  border-left: 1px solid color-mix(in srgb, var(--fill) 72%, black);
+  border-top: 1px solid color-mix(in srgb, var(--fill) 72%, black);
+  transition: background-color 0.4s ease, opacity 500ms ease var(--d, 0s);
+  position: relative;
+  line-height: 1;
+  overflow: hidden;
+}
+.tile .num {
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.tile .icon {
+  position: absolute;
+  inset: 15%;
+  background-color: #000;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  z-index: 1;
+}
+.tile.has-mountain .icon {
+  -webkit-mask-image: url('assets/mountainie.png');
+  mask-image: url('assets/mountainie.png');
+}
+.tile.has-castle .icon {
+  -webkit-mask-image: url('assets/citie.png');
+  mask-image: url('assets/citie.png');
+}
+.tile.has-general .icon {
+  -webkit-mask-image: url('assets/crownie.png');
+  mask-image: url('assets/crownie.png');
+}
+
+/* fog: neither player sees this cell (owner -2) — dark, no army or terrain */
+.tile.fog { --fill: var(--fog-tile); color: transparent; }
+/* a mountain in fog stays visible as static terrain: a grayer tile + icon */
+.tile.fog.fog-mountain { --fill: var(--fog-mountain-tile); }
+.tile.neutral { --fill: var(--neutral-tile); color: #333; }
+.tile.mountain { --fill: var(--mountain-tile); color: #222; }
+.tile.neutral-castle { --fill: var(--neutral-castle-tile); color: #fff; }
+.tile.blue { --owner: var(--blue); --fill: var(--owner); color: #fff; }
+.tile.red { --owner: var(--red); --fill: var(--owner); color: #fff; }
+/* owned structures stand out as a darker shade of the owner's color — exact
+   engine factors (rendering.py): generals 0.65, captured castles 0.8 */
+.tile.blue.has-general, .tile.red.has-general { --fill: color-mix(in srgb, var(--owner) 65%, black); }
+.tile.blue.has-castle, .tile.red.has-castle { --fill: color-mix(in srgb, var(--owner) 80%, black); }
+
+.container {
+  position: fixed;
+  top: 0;
+  left: max(0px, calc((100vw - var(--stage-max)) / 2));
+  width: min(50vw, calc(var(--stage-max) / 2));
+  height: 100vh;
+  z-index: 2;
+  background: #e6e6e6;
+  padding: clamp(1.5rem, 3vw, 4rem) clamp(1rem, 2.5vw, 3rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.container-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3rem;
+  width: 100%;
+}
+
+.presents {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.logo {
+  width: 360px;
+  max-width: 80%;
+  height: auto;
+}
+
+.hero {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.eyebrow {
+  font-size: clamp(0.9rem, 1.4vw, 1.4rem);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(2rem, 5.5vw, 6rem);
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  display: flex;
+  flex-direction: column;
+}
+.title-line.blue { color: var(--blue); }
+.title-line.accent { color: var(--accent); }
+
+.subtitle {
+  font-size: clamp(0.95rem, 1.4vw, 1.4rem);
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 1.5rem 2rem;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: center;
+  min-width: 110px;
+}
+
+.meta-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.meta-value {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.meta-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--border);
+}
+
+.status {
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 1.7vw, 1.6rem);
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.marquee {
+  width: 100%;
+  max-width: 420px;
+  overflow: hidden;
+  opacity: 0.65;
+  margin-top: 0.5rem;
+  mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 7s linear infinite;
+}
+.marquee-group {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  padding-right: 3rem;
+  flex-shrink: 0;
+}
+.marquee-logo {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+}
+@keyframes marquee-scroll {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+
+.blink { animation: blink 2s ease-in-out infinite; }
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.notify-form {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border: 1px solid var(--fg);
+  background: transparent;
+  max-width: 100%;
+}
+.notify-input {
+  font-family: var(--font-mono);
+  font-size: clamp(0.8rem, 1vw, 0.95rem);
+  padding: clamp(0.6rem, 0.9vw, 0.85rem) clamp(0.7rem, 1vw, 1rem);
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--fg);
+  min-width: 0;
+  width: 100%;
+}
+.notify-input::placeholder { color: var(--muted); }
+.notify-submit {
+  font-family: var(--font-mono);
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  background: var(--fg);
+  color: var(--bg);
+  border: none;
+  padding: 0 clamp(0.9rem, 1.4vw, 1.5rem);
+  cursor: pointer;
+  transition: opacity .2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.notify-submit:hover { opacity: 0.85; }
+.notify-submit:disabled { opacity: 0.5; cursor: progress; }
+
+.notify-honey {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.notify-status {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  min-height: 1.1em;
+}
+.notify-status[data-kind="success"] { color: var(--blue); }
+.notify-status[data-kind="error"] { color: var(--accent); }
+
+.footer {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+  letter-spacing: 0.08em;
+}
+.footer a { color: var(--muted); border-color: transparent; }
+.footer a:hover { color: var(--fg); border-color: var(--fg); }
+
+@media (max-width: 768px) {
+  .board-bg { display: none; }
+  .container {
+    width: 100vw;
+    height: 100vh;
+    left: 0;
+    border-right: none;
+    padding: 2rem 1.5rem;
+    align-items: center;
+  }
+  .presents { align-items: center; }
+  .hero { text-align: center; }
+}

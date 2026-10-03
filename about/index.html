@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="alternate icon" href="/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <title>About — Generals Competition</title>
+  <meta name="description" content="What the Generals Competition is, the format and rounds, fair play, and who's behind it. Full game rules live on the Rules page." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Generals Competition" />
+  <meta property="og:title" content="Generals Competition" />
+  <meta property="og:description" content="Build a bot to dominate generals.io. $18,300 in prizes — opens Aug 1." />
+  <meta property="og:url" content="https://www.generals.bot/" />
+  <meta property="og:image" content="https://www.generals.bot/assets/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Generals Competition" />
+  <meta name="twitter:description" content="Build a bot to dominate generals.io. $18,300 in prizes — opens Aug 1." />
+  <meta name="twitter:image" content="https://www.generals.bot/assets/og.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/assets/site.css" />
+</head>
+<body class="page">
+  <site-nav current="about"></site-nav>
+
+  <main class="page-main">
+    <header class="page-hero">
+      <h1>About the competition</h1>
+    </header>
+
+    <section class="section">
+      <h2>01 — What this is</h2>
+      <p>The Generals Competition is an open contest for <a href="https://generals.io" target="_blank" rel="noopener">generals.io</a> bots. Build a program that plays the game well, submit it, and we run it against everyone else's submissions continuously. Top-ranked bots take the prize pool.</p>
+      <p>It's organized by <strong><a href="https://equilibre.ai" target="_blank" rel="noopener">Equilibre Technologies</a></strong> in collaboration with <strong><a href="https://ufal.mff.cuni.cz/" target="_blank" rel="noopener">ÚFAL</a></strong> (the Institute of Formal and Applied Linguistics at Charles University). Open to anyone — students, hobbyists, researchers.</p>
+    </section>
+
+    <section class="section">
+      <h2>02 — The game</h2>
+      <p><a href="https://generals.io" target="_blank" rel="noopener">Generals.io</a> is a fast-paced strategy game played on a rectangular grid: expand your territory, grow your army, capture castles, and take the opponent's general before they take yours. This competition runs a programmatic version with the same rules, played by bots rather than humans.</p>
+      <p>The complete ruleset — the board, turns and moves, army growth, combat, the Round 1 parameters, and match constraints — lives on the <a href="/rules"><strong>Rules page</strong></a>.</p>
+      <p><strong>Strongly recommended:</strong> spend 10 minutes playing a few rounds or watching replays on <a href="https://generals.io" target="_blank" rel="noopener">generals.io</a> yourself before you start writing a bot. Reading the rules tells you what's legal; playing tells you why expansion tempo and castle timing actually matter.</p>
+    </section>
+
+    <section class="section">
+      <h2>03 — Format</h2>
+      <p>One competition, one ruleset, one continuous leaderboard — with <strong>two prize checkpoints</strong> (see the <a href="/">landing page</a> for amounts).</p>
+      <ul>
+        <li><strong>Sprint</strong> — the first checkpoint, <strong>August 8</strong> (one week in). The top of the leaderboard advances to a <strong>Sprint tournament</strong> — a thorough head-to-head evaluation that decides the top 3 and their prizes. The race keeps going.</li>
+        <li><strong>Marathon</strong> — the finish, <strong>end of August</strong>. The top of the board advances to the <strong>final tournament</strong> that decides the champion and the Marathon prizes.</li>
+      </ul>
+      <p>Bots play <strong>continuously</strong> against other submissions throughout. A new submission is placed against opponents of similar skill within minutes, and a round robin every four hours fills in every remaining pairing. Rankings are recomputed by Elo after every batch — a rating stays marked provisional (<strong>?</strong>) until the bot has played most of the field. Standings at each checkpoint determine that checkpoint's payout.</p>
+    </section>
+
+    <section class="section">
+      <h2>04 — Anti-cheat &amp; fair play</h2>
+      <p>We have <strong>zero tolerance for cheating</strong>. Every submission runs in an isolated sandbox and is scanned for malicious intent, and any attempt to cheat or sabotage the competition results in disqualification and a permanent ban.</p>
+      <p>The bar is independence: every submission must represent its account's own work. Teams are welcome — a team competes through <strong>one shared account</strong> — but the mapping is strict: one account per person or team, each person on at most one account, and no sharing code, weights, or strategies between accounts. The sandbox redacts identifying info — attempting to deanonymize, read, or interfere with other bots is forbidden. We review match logs and investigate anomalous patterns, like suspiciously similar play across accounts.</p>
+    </section>
+
+    <section class="section">
+      <h2>05 — Conduct</h2>
+      <p>Be respectful in Discord and elsewhere. Harassment, slurs, and bad-faith behavior get you removed. These rules may change as the competition runs; any update is announced at least 7 days before it takes effect.</p>
+    </section>
+  </main>
+
+  <site-footer></site-footer>
+
+  <script src="/assets/site.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="alternate icon" href="/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <title>FAQ — Generals Competition</title>
+  <meta name="description" content="Common questions about the Generals Competition." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding: 1.2rem 0;
+    }
+    .faq-q {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+      color: var(--fg);
+    }
+    .faq-q::-webkit-details-marker { display: none; }
+    .faq-q::after {
+      content: '+';
+      font-family: var(--font-display);
+      color: var(--muted);
+      font-size: 1.4rem;
+      transition: transform 0.2s, color 0.2s;
+    }
+    details[open] .faq-q::after { content: '−'; color: var(--fg); }
+    .faq-a {
+      padding-top: 0.8rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.65;
+    }
+    .faq-a a { color: var(--fg); }
+    .contact-card {
+      margin-top: 3rem;
+      padding: 2rem;
+      border: 1px solid var(--fg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+    }
+    .contact-card h2 {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.3rem;
+    }
+    .contact-card p { color: var(--muted); font-size: 0.88rem; }
+  </style>
+</head>
+<body class="page">
+  <site-nav current="faq"></site-nav>
+
+  <main class="page-main">
+    <header class="page-hero">
+      <p class="eyebrow">Frequently Asked</p>
+      <h1>FAQ</h1>
+    </header>
+
+    <section class="section">
+      <details class="faq-item" open>
+        <summary class="faq-q">Do I need to know generals.io to compete?</summary>
+        <div class="faq-a">No prior experience required. The <a href="/docs">docs</a> cover the game rules in 5 minutes and the starter bot is a working example you can iterate from.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">What language can I write my bot in?</summary>
+        <div class="faq-a">Any language that can read and write whitespace-separated integers on stdin/stdout — the <a href="/docs">protocol</a> is deliberately trivial, and there are reference bots in Python, C++ and Rust. You submit a <code>.zip</code> with a <code>run.sh</code> at its root that starts your bot (plus an optional <code>build.sh</code> to compile once). No Dockerfile — Python 3.12, C/C++ (GCC) and Rust toolchains are baked into the sandbox image (exact versions and the pre-installed Python libraries are listed in <a href="/docs#environment">Environment</a>); anything else must be shipped inside your zip as a self-contained binary or vendored runtime.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Can I use machine learning?</summary>
+        <div class="faq-a">Yes — train offline and submit the weights inside your zip. There is <strong>no network at any point</strong>, during the build or the match, so nothing can be downloaded: vendor your dependencies and your checkpoints. Matches are CPU-only (one core per bot), so use CPU builds of your ML framework — CPU <code>torch</code> and <code>jax</code> are already pre-installed (see <a href="/docs#environment">Environment</a>).</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Can we compete as a team?</summary>
+        <div class="faq-a">Yes — teams are welcome. A team competes through <strong>one shared account</strong> (the email/password option at registration is made for this) and appears as one entry on the leaderboard. The mapping is strict: one account per person or team, and each person can be part of only one account — see <a href="/about">fair play</a>.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">How many submissions can I make?</summary>
+        <div class="faq-a">You can keep up to 10 stored submissions and make 20 per day, with 5 minutes between them and at most 3 evaluating at once. Delete a stored one to free a slot. Your <strong>active agent</strong> — the one that represents you on the leaderboard — is always your most recent submission that passed its checks, so improving your bot is just submitting again.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">How are matches scheduled?</summary>
+        <div class="faq-a">Continuously, in two layers. Every submission first plays a quick qualification check — 3 games against the expander baseline (the gate) and 3 against hunter (informational) — so you get feedback within minutes. To qualify, your bot must run without crashing <em>and</em> win a majority of its expander games (2 of 3); the hunter record is shown on your submissions page but never gates. A bot that fails stays off the leaderboard until you upload one that passes — your previously qualified bot, if you have one, keeps its place. A passing bot is immediately <em>placed</em>: it plays a spread of opponents around its estimated strength and joins the leaderboard with a provisional Elo (marked <strong>?</strong>). Then a full round robin every 6 hours fills in every pairing not yet played — each pairing runs on 3 maps from both sides, so nobody is advantaged by their starting corner. Ranked play begins on <strong>August 1</strong>.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Do I get the prize if I win?</summary>
+        <div class="faq-a">If you're on the eligible-for-prize list (i.e. not an Equilibre/ÚFAL employee) and finish in a prize position, yes — we contact you by email within a few days of the deadline and pay within 30 days.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Is my code public?</summary>
+        <div class="faq-a">Only if you publish it yourself. Your uploaded zip is stored privately and is never served from the site — all anyone else sees is your bot's name, its rank, and the replays of its matches.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">What happens after the competition ends?</summary>
+        <div class="faq-a">The leaderboard freezes at the deadline. Top results are announced on stream. Replays remain available indefinitely. Future seasons may follow — we'll email everyone on the list.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">I found a bug / I have an idea — where do I report it?</summary>
+        <div class="faq-a">Open an issue on the <a href="https://github.com/strakam/generals-competition" target="_blank" rel="noopener">GitHub repo</a>, or ping us in Discord. PRs welcome.</div>
+      </details>
+    </section>
+
+    <div class="contact-card">
+      <div>
+        <h2>Still stuck?</h2>
+        <p>The Discord is the fastest place to get an answer.</p>
+      </div>
+      <a class="btn-primary" href="https://discord.gg/AykvgRVPj" target="_blank" rel="noopener">Join Discord</a>
+    </div>
+  </main>
+
+  <site-footer></site-footer>
+
+  <script src="/assets/site.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Generals Competition">
+  <rect width="64" height="64" rx="12" fill="#0a0a0c"/>
+  <!-- the generals.io general: a crown, in the site blue -->
+  <g fill="none" stroke="#4664dc" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M14 44 L11 20 L23 29 L32 15 L41 29 L53 20 L50 44 Z"/>
+    <path d="M14 50 L50 50"/>
+  </g>
+</svg>

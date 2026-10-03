@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="alternate icon" href="/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <title>Player — Generals Competition</title>
+  <meta name="description" content="Player profile: final league rating, record, head-to-head and match history." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Generals Competition" />
+  <meta property="og:title" content="Generals Competition" />
+  <meta property="og:description" content="Build a bot to dominate generals.io. $18,300 in prizes — opens Aug 1." />
+  <meta property="og:url" content="https://www.generals.bot/" />
+  <meta property="og:image" content="https://www.generals.bot/assets/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Generals Competition" />
+  <meta name="twitter:description" content="Build a bot to dominate generals.io. $18,300 in prizes — opens Aug 1." />
+  <meta name="twitter:image" content="https://www.generals.bot/assets/og.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    /* ---- profile header + stats ---- */
+    .pp-head { display: flex; gap: 1.4rem; align-items: center; flex-wrap: wrap; padding-bottom: 1.6rem; border-bottom: 1px solid var(--border); }
+    .pp-ava, .pp-ava-ph { width: 84px; height: 84px; border: 1px solid var(--fg); display: block; object-fit: cover; flex-shrink: 0; }
+    .pp-ava-ph { display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 2rem; color: var(--muted); background: rgba(0,0,0,0.04); }
+    .pp-id { min-width: 0; }
+    .pp-name { font-family: var(--font-display); font-size: 1.7rem; font-weight: 800; letter-spacing: -0.01em; display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; }
+    .pp-flag { font-size: 1.15em; line-height: 1; cursor: default; }
+    .pp-tags { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.45rem; }
+    .pp-soc { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; padding: 0.16rem 0.5rem; border: 1px solid var(--border); color: var(--muted); text-decoration: none; white-space: nowrap; }
+    .pp-soc:hover { color: var(--fg); border-color: var(--fg); }
+    .pp-joined { font-family: var(--font-mono); font-size: 0.66rem; color: var(--muted); letter-spacing: 0.06em; }
+    .pp-bio { margin-top: 0.55rem; font-size: 0.92rem; color: var(--fg); max-width: 38rem; }
+    .pp-actions { margin-left: auto; }
+    .pp-cta { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; color: var(--fg); text-decoration: none; border-bottom: 1px solid var(--fg); padding-bottom: 1px; white-space: nowrap; }
+    .pp-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: 0.8rem; margin: 1.4rem 0 0; }
+    .pp-stat { border: 1px solid var(--border); padding: 0.85rem 1rem; }
+    .pp-stat .k { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+    .pp-stat .v { font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; margin-top: 0.3rem; display: flex; align-items: baseline; gap: 0.4rem; }
+    .pp-stat .v .sub { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 400; color: var(--muted); }
+    .pp-stat .v .medal { font-size: 1.15em; }
+    .rec .w { color: #15803d; } .rec .l { color: var(--red); } .rec .d { color: var(--muted); }
+    .pp-empty, .pp-loading { color: var(--muted); font-size: 0.9rem; padding: 1.2rem 0; }
+    .pp-back { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); text-decoration: none; }
+    .pp-back:hover { color: var(--fg); }
+    .pp-sec-h { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin: 0 0 0.9rem; display: flex; align-items: baseline; gap: 0.8rem; }
+    .pp-sec-h a { font-size: 0.62rem; letter-spacing: 0.08em; color: var(--muted); text-decoration: none; text-transform: none; }
+    .pp-sec-h a:hover { color: var(--fg); }
+
+    /* ---- head-to-head: a compact .data-table — same mono data idiom as the
+       leaderboard and the match list beside it; just tighter for the side column ---- */
+    .pp-table { font-size: 0.78rem; }
+    .pp-table th, .pp-table td { padding: 0.5rem 0.7rem; }
+    .pp-table th { font-size: 0.6rem; letter-spacing: 0.16em; }
+    /* scroll box — same idiom as the match list (.pm-list) above it; the
+       header stays pinned while the opponent rows scroll underneath */
+    .pp-h2h { border: 1px solid var(--border); max-height: 19rem; overflow-y: auto; }
+    .pp-h2h .pp-table { width: 100%; }
+    .pp-h2h { overflow-x: auto; -webkit-overflow-scrolling: touch; } /* narrow screens: table pans, body stays clipped */
+    .pp-h2h thead th { position: sticky; top: 0; background: var(--bg); z-index: 1; }
+    .pp-opp { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--border); }
+    .pp-opp:hover { border-bottom-color: var(--fg); }
+    .pp-baseline { color: var(--muted); }
+
+    /* ---- match list: the whole row is tinted by result (win/loss/draw) ---- */
+    .pm-list { border: 1px solid var(--border); max-height: 19rem; overflow-y: auto; }
+    .pm-search { margin-bottom: 0.5rem; }
+    .pm-empty { padding: 0.9rem; margin: 0; }
+    .pm-row {
+      display: flex; align-items: center; gap: 0.7rem; padding: 0.55rem 0.8rem;
+      border-bottom: 1px solid var(--border); border-left: 3px solid transparent;
+      font-family: var(--font-mono); font-size: 0.78rem; cursor: pointer;
+    }
+    .pm-row:last-child { border-bottom: none; }
+    .pm-row.win { background: color-mix(in srgb, #15803d 10%, transparent); }
+    .pm-row.win:hover { background: color-mix(in srgb, #15803d 17%, transparent); }
+    .pm-row.loss { background: color-mix(in srgb, var(--red) 9%, transparent); }
+    .pm-row.loss:hover { background: color-mix(in srgb, var(--red) 15%, transparent); }
+    .pm-row.draw:hover { background: rgba(0,0,0,0.03); }
+    .pm-row.is-active { border-left-color: var(--fg); }
+    .pm-row.is-active.win { background: color-mix(in srgb, #15803d 19%, transparent); }
+    .pm-row.is-active.loss { background: color-mix(in srgb, var(--red) 17%, transparent); }
+    .pm-row.is-active.draw { background: rgba(0,0,0,0.05); }
+    .pm-opp { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pm-meta { margin-left: auto; color: var(--muted); font-size: 0.66rem; white-space: nowrap; flex-shrink: 0; }
+    .pm-meta .pm-id { opacity: 0.55; letter-spacing: 0.03em; }
+
+    /* match rows are records only — the league replays are not archived */
+    .pm-row { cursor: default; }
+    .pm-row.win:hover { background: color-mix(in srgb, #15803d 10%, transparent); }
+    .pm-row.loss:hover { background: color-mix(in srgb, var(--red) 9%, transparent); }
+    .pm-row.draw:hover { background: transparent; }
+    .pm-note { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); margin: 0 0 0.6rem; line-height: 1.5; }
+    .pm-note a { color: inherit; border-bottom: 1px dotted var(--border); text-decoration: none; }
+    .pm-note a:hover { border-bottom-color: var(--fg); }
+
+    /* ---- layout: matches left, head-to-head right ---- */
+    .pp-grid { margin-top: 2.2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+    .pp-grid > section { min-width: 0; }
+    @media (max-width: 800px) { .pp-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body class="page">
+  <site-nav current="replays"></site-nav>
+
+  <main class="page-main">
+    <p style="margin-bottom: 1rem;"><a class="pp-back" href="/leaderboard">← Leaderboard</a></p>
+    <div id="pp"><p class="pp-loading">Loading profile…</p></div>
+  </main>
+
+  <site-footer></site-footer>
+
+  <script src="/assets/site.js" defer></script>
+  <script type="module">
+    const root = document.getElementById('pp');
+    const { esc, MEDALS, countryFlag, fmtDate, fuzzy, hiMatch } = window.GC; // shared helpers (assets/site.js)
+    const isBaseline = (n) => /\(baseline\)/i.test(n || '');
+
+    const params = new URLSearchParams(location.search);
+    const name = (params.get('name') || '').trim();
+
+    let matches = [], profileName = '';
+
+    function fail(msg) { root.innerHTML = `<p class="pp-empty">${esc(msg)}</p>`; }
+
+    async function load() {
+      if (!name) return fail('No player specified.');
+      document.title = `${name} — Generals Competition`;
+      let prof;
+      try {
+        // Static archive: one JSON per player, frozen when the league stopped.
+        const key = encodeURIComponent(name);
+        const [pRes, mRes] = await Promise.all([
+          fetch(`/data/profiles/${key}.json`),
+          fetch(`/data/matches/${key}.json`).catch(() => null),
+        ]);
+        if (pRes.status === 404) return fail(`No player named “${name}”.`);
+        if (!pRes.ok) throw new Error();
+        prof = await pRes.json();
+        try { matches = mRes && mRes.ok ? (await mRes.json()).matches || [] : []; } catch {}
+      } catch {
+        return fail('Could not load this profile.');
+      }
+      render(prof);
+      renderMatchList();
+      const search = document.getElementById('pmSearch');
+      if (search) search.addEventListener('input', renderMatchList);
+    }
+
+    function render({ profile, rating, rank, players, h2h }) {
+      profileName = profile.name;
+      const flag = countryFlag(profile.country);
+      const ava = profile.avatar_url
+        ? `<img class="pp-ava" src="${esc(profile.avatar_url)}" alt="" />`
+        : `<span class="pp-ava-ph">${esc((profile.name || '?').trim().charAt(0).toUpperCase())}</span>`;
+      const games = rating ? Number(rating.games) || 0 : 0;
+      const wins = rating ? Number(rating.wins) || 0 : 0;
+      const losses = rating ? Number(rating.losses) || 0 : 0;
+      const draws = rating ? Number(rating.draws) || 0 : 0;
+      const pct = games ? Math.round((100 * wins) / games) : null;
+      const rankV = rank
+        ? `${rank <= 3 ? `<span class="medal">${MEDALS[rank - 1]}</span>` : '#' + rank} <span class="sub">of ${players}</span>`
+        : '— <span class="sub">not ranked yet</span>';
+
+      const h2hRows = (h2h || []).map((o) => {
+        const total = o.wins + o.losses + o.draws;
+        const oppPct = total ? Math.round((100 * o.wins) / total) : 0;
+        const opp = isBaseline(o.opponent)
+          ? `<span class="pp-baseline">${esc(o.opponent)}</span>`
+          : `<a class="pp-opp" href="/player/?name=${encodeURIComponent(o.opponent)}">${esc(o.opponent)}</a>`;
+        return `
+          <tr>
+            <td>${opp}</td>
+            <td class="num rec"><span class="w">${o.wins}W</span> <span class="l">${o.losses}L</span> <span class="d">${o.draws}D</span></td>
+            <td class="num">${total ? oppPct + '%' : '—'}</td>
+          </tr>`;
+      }).join('');
+
+
+      root.innerHTML = `
+        <div class="pp-head">
+          ${ava}
+          <div class="pp-id">
+            <div class="pp-name">${esc(profile.name)}${flag ? `<span class="pp-flag" title="${esc(profile.country)}">${flag}</span>` : ''}</div>
+            <div class="pp-tags">
+              ${profile.linkedin ? `<a class="pp-soc" href="https://www.linkedin.com/in/${esc(profile.linkedin)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : ''}
+              ${profile.x_handle ? `<a class="pp-soc" href="https://x.com/${esc(profile.x_handle)}" target="_blank" rel="noopener">X ↗</a>` : ''}
+              ${profile.joined ? `<span class="pp-joined">joined ${esc(fmtDate(profile.joined))}</span>` : ''}
+            </div>
+            ${profile.bio ? `<p class="pp-bio">${esc(profile.bio)}</p>` : ''}
+          </div>
+          <div class="pp-actions"><a class="pp-cta" href="/replays/?player=${encodeURIComponent(profile.name)}">Tournament replays →</a></div>
+        </div>
+
+        <div class="pp-stats">
+          <div class="pp-stat"><div class="k">Rank</div><div class="v">${rankV}</div></div>
+          <div class="pp-stat"><div class="k">Elo</div><div class="v">${rating ? Number(rating.elo) : '—'}</div></div>
+          <div class="pp-stat"><div class="k">Record</div><div class="v rec" style="font-size:1.05rem;"><span class="w">${wins}W</span> <span class="l">${losses}L</span> <span class="d">${draws}D</span></div></div>
+          <div class="pp-stat"><div class="k">Win rate</div><div class="v">${pct == null ? '—' : pct + '%'} ${games ? `<span class="sub">${games} games</span>` : ''}</div></div>
+        </div>
+
+        <div class="pp-grid">
+          <section>
+            <h2 class="pp-sec-h">League matches <a href="/replays/?player=${encodeURIComponent(profile.name)}">tournament replays →</a><span id="pmCount" class="fz-count"></span></h2>
+            <p class="pm-note">League replays are no longer available — tournament replays are on <a href="/results">/results</a> and <a href="/sprint">/sprint</a>.</p>
+            ${matches.length ? `
+              <input class="fz-search pm-search" id="pmSearch" type="search" placeholder="Filter by opponent…" aria-label="Filter matches by opponent" />
+              <div class="pm-list" id="pmList"></div>
+            ` : '<p class="pp-empty">No league matches recorded.</p>'}
+          </section>
+          <section>
+            <h2 class="pp-sec-h">Head-to-head</h2>
+            ${h2hRows
+              ? `<div class="pp-h2h">
+                   <table class="data-table pp-table" aria-label="Head-to-head">
+                     <thead><tr><th>Opponent</th><th class="num">Record</th><th class="num">Win %</th></tr></thead>
+                     <tbody>${h2hRows}</tbody>
+                   </table>
+                 </div>`
+              : '<p class="pp-empty">No league games recorded.</p>'}
+          </section>
+        </div>`;
+    }
+
+    // The match list is rebuilt on every keystroke. Rows are records only: the
+    // league replays were not archived, so nothing here opens a viewer.
+    function renderMatchList() {
+      const list = document.getElementById('pmList');
+      if (!list) return;
+      const q = (document.getElementById('pmSearch')?.value || '').trim().toLowerCase();
+
+      // This page IS one player's archive, so the query only ever means the
+      // opponent — the profile's own name is never scored.
+      let rows = matches.map((m, i) => ({ m, i, hit: null }));
+      if (q) {
+        rows = rows
+          .map((r) => {
+            const opp = r.m.a_name === profileName ? r.m.b_name : r.m.a_name;
+            return { ...r, opp, hit: fuzzy(opp, q) };
+          })
+          .filter((r) => r.hit)
+          .sort((x, y) => y.hit.score - x.hit.score || x.i - y.i);  // best first, then newest
+      }
+
+      const count = document.getElementById('pmCount');
+      if (count) count.textContent = q ? `${rows.length} / ${matches.length}` : '';
+
+      if (!rows.length) {
+        list.innerHTML = '<p class="pp-empty pm-empty">No opponent matches that.</p>';
+        return;
+      }
+      list.innerHTML = rows.map(({ m, hit }) => {
+        const mine = m.a_name === profileName;
+        const opp = mine ? m.b_name : m.a_name;
+        const won = (mine && m.winner === 'A') || (!mine && m.winner === 'B');
+        const lost = (mine && m.winner === 'B') || (!mine && m.winner === 'A');
+        const cls = won ? 'win' : lost ? 'loss' : 'draw';
+        const word = won ? 'Won' : lost ? 'Lost' : 'Draw';
+        return `
+          <div class="pm-row ${cls}" data-id="${m.id}" title="${word} vs ${esc(opp)}">
+            <span class="pm-opp">${word} vs ${hiMatch(opp, hit)}</span>
+            <span class="pm-meta">${m.turns} turns · ${esc(fmtDate(m.created_at))} · <span class="pm-id">#${m.id}</span></span>
+          </div>`;
+      }).join('');
+    }
+
+    load();
+  </script>
+</body>
+</html>

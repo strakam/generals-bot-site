@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="alternate icon" href="/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <title>Replays — Generals Competition</title>
+  <meta name="description" content="Watch every game of the Sprint and Marathon tournaments." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Generals Competition" />
+  <meta property="og:title" content="Generals Competition" />
+  <meta property="og:description" content="Build a bot to dominate generals.io. $18,300 in prizes — opens Aug 1." />
+  <meta property="og:url" content="https://www.generals.bot/" />
+  <meta property="og:image" content="https://www.generals.bot/assets/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Generals Competition" />
+  <meta name="twitter:description" content="Build a bot to dominate generals.io. $18,300 in prizes — opens Aug 1." />
+  <meta name="twitter:image" content="https://www.generals.bot/assets/og.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/assets/site.css" />
+  <style>
+    .replays-layout {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 2rem;
+    }
+    .replay-viewer {
+      min-height: 28rem;
+      display: flex;
+      flex-direction: column;
+    }
+    /* viewer chrome (meta/stage/controls/score) is shared — assets/site.css.
+       This page wants a slightly taller stage. */
+    .replay-viewer-stage { min-height: 22rem; }
+    .replay-list {
+      border: 1px solid var(--border);
+      position: relative;   /* grid stretches this to the replay viewer's height */
+    }
+    .replay-list .rl-scroll {
+      position: absolute;   /* out of flow → doesn't grow the row; fills + scrolls */
+      inset: 0;
+      overflow-y: auto;
+    }
+    .replay-list-head {
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      position: sticky;
+      top: 0;
+      z-index: 2;        /* paint above scrolling rows (item #ids form opacity stacking contexts) */
+      background: var(--bg);
+    }
+    .replay-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.55rem 1rem;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .replay-item:hover { background: rgba(0,0,0,0.03); }
+    .replay-item.is-active { background: rgba(0,0,0,0.06); }
+    .replay-item-bots { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 0.12rem; }
+    .rb-name { color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rb-name.win { font-weight: 700; }
+    /* result chips: filled green W on the winner, outlined red L on the loser,
+       muted D on both for a draw — outcome readable at a glance, not just bold */
+    .rb-res {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 1.05rem; height: 1.05rem; margin-right: 0.45rem;
+      font-size: 0.6rem; font-weight: 700; line-height: 1;
+      vertical-align: text-bottom; flex-shrink: 0;
+    }
+    .rb-res.w { background: #15803d; color: #fff; }
+    .rb-res.l { color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
+    .rb-res.d { color: var(--muted); box-shadow: inset 0 0 0 1px var(--border); }
+    .replay-item-side { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 0.12rem; }
+    .replay-item-meta { color: var(--muted); font-size: 0.7rem; white-space: nowrap; }
+    .replay-item-id { color: var(--muted); font-size: 0.64rem; opacity: 0.55; white-space: nowrap; letter-spacing: 0.03em; }
+    .replay-empty { color: var(--muted); font-family: var(--font-mono); font-size: 0.78rem; padding: 1rem; }
+    @media (max-width: 800px) { .replays-layout { grid-template-columns: 1fr; } .replay-list { height: 70vh; } }
+    .replay-list-head { display: flex; flex-direction: column; gap: 0.5rem; }
+    .replay-list-clear { font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); text-decoration: none; margin-left: 0.4rem; }
+    .replay-list-clear:hover { color: var(--fg); }
+    .rl-head-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+    /* Marathon / Sprint toggle: two mono tabs, the active one filled */
+    .rl-tabs { display: flex; gap: 0; border: 1px solid var(--fg); width: max-content; }
+    .rl-tabs a {
+      font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase;
+      padding: 0.35rem 0.8rem; color: var(--fg); text-decoration: none;
+    }
+    .rl-tabs a + a { border-left: 1px solid var(--fg); }
+    .rl-tabs a.is-on { background: var(--fg); color: var(--bg); }
+    .replay-item-stage { color: var(--muted); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    .replay-more { padding: 0.8rem 1rem; font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+    .replay-more button { font: inherit; color: var(--fg); background: transparent; border: 1px solid var(--fg); padding: 0.3rem 0.7rem; cursor: pointer; }
+    .replay-more button:hover { background: var(--fg); color: var(--bg); }
+  </style>
+</head>
+<body class="page">
+  <site-nav current="replays"></site-nav>
+
+  <main class="page-main">
+    <header class="page-hero">
+      <p class="eyebrow">Tournament Archive</p>
+      <h1>Replays</h1>
+    </header>
+
+    <div class="replays-layout">
+      <div class="replay-viewer">
+        <div class="replay-viewer-meta">
+          <span id="rMeta">Select a match →</span>
+          <span id="rTick">Tick 0 / 0</span>
+        </div>
+        <div class="replay-score" id="rScore"></div>
+        <div class="replay-viewer-stage">
+          <div class="replay-board" id="rboard"></div>
+          <div id="rStageMsg">Loading matches…</div>
+        </div>
+        <div class="replay-controls">
+          <button id="rRestart" title="Restart">◀◀</button>
+          <button id="rPlay" class="ctl-play" title="Play / pause">▶</button>
+          <button id="rEnd" title="Jump to end">▶▶</button>
+          <input class="rscrub" id="rScrub" type="range" min="0" max="0" value="0" aria-label="Scrubber" />
+          <button id="rSpeed" class="ctl-speed" title="Playback speed">1×</button>
+        </div>
+        <div class="replay-hint">
+          <span><kbd>Space</kbd> play / pause</span>
+          <span class="sep">·</span>
+          <span><kbd>←</kbd> <kbd>→</kbd> step a frame</span>
+          <span class="sep">·</span>
+          <span>drag the bar to jump anywhere</span>
+        </div>
+      </div>
+
+      <div class="replay-list" aria-label="Tournament games">
+        <div class="rl-scroll">
+          <div class="replay-list-head">
+            <div class="rl-tabs" role="tablist" aria-label="Tournament">
+              <a href="?t=marathon" data-t="marathon" role="tab">Marathon</a>
+              <a href="?t=sprint" data-t="sprint" role="tab">Sprint</a>
+            </div>
+            <div class="rl-head-row">
+              <span id="rListTitle">All games</span>
+              <span id="rCount" class="fz-count"></span>
+            </div>
+            <input class="fz-search" id="rSearch" type="search" placeholder="Filter by player…" aria-label="Filter games by player" />
+          </div>
+          <div id="rList"><div class="replay-empty">Loading…</div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <site-footer></site-footer>
+
+  <script src="/board.js"></script>
+  <script src="/assets/site.js" defer></script>
+  <script type="module">
+    (function () {
+      const $ = (id) => document.getElementById(id);
+      const board = $('rboard'), stageMsg = $('rStageMsg');
+      const meta = $('rMeta'), tickEl = $('rTick'), scrub = $('rScrub'), scoreEl = $('rScore');
+      const playBtn = $('rPlay'), speedBtn = $('rSpeed');
+      const ctrls = [playBtn, $('rRestart'), $('rEnd'), speedBtn, scrub];
+      const SPEEDS = [320, 160, 80, 40], LABELS = ['0.5×', '1×', '2×', '4×'];
+      let speedIdx = 1, current = null, matches = [];
+
+      const { esc, fmtDateTime, fuzzy, hiMatch: hi } = window.GC; // shared helpers (assets/site.js)
+      const setControls = (on) => ctrls.forEach((el) => { el.disabled = !on; });
+      // Keep the play/pause button in sync with actual playback state. board.js's
+      // pause() doesn't repaint, so onFrame alone can't catch a pause — call this
+      // right after any action that starts or stops playback.
+      const syncPlay = () => {
+        playBtn.textContent = player.playing ? '❚❚' : '▶';
+        playBtn.title = player.playing ? 'Pause' : 'Play';
+      };
+
+      // Tournament artifacts — the same files /results and /sprint render.
+      const TOURNEYS = {
+        marathon: { label: 'Marathon', src: '/assets/marathon-2026-09-01.json', page: '/results' },
+        sprint:   { label: 'Sprint',   src: '/assets/sprint-2026-08-08.json',   page: '/sprint' },
+      };
+      const PAGE = 400; // rows rendered before "show all" — 13,920 at once is too many DOM nodes
+      const params = new URLSearchParams(location.search);
+      const tKey = TOURNEYS[params.get('t')] ? params.get('t') : 'marathon';
+      const T = TOURNEYS[tKey];
+      const playerFilter = (params.get('player') || '').trim();
+      let stages = {}, shown = PAGE;
+
+      const nameHtml = (nm) => `<a href="/player/?name=${encodeURIComponent(nm)}" title="View ${esc(nm)}'s profile">${esc(nm)}</a>`;
+      // The scoreboard is built ONCE per match (names are static links) and only
+      // the numbers + leader highlight update per frame — keeps the profile
+      // links clickable during playback instead of being re-created 12x/sec.
+      let scoreRefs = null;
+      function buildScore() {
+        if (!current) { scoreEl.innerHTML = ''; scoreRefs = null; return; }
+        // Tournament rows are already in seat order: p0 is blue, p1 is red.
+        const names = [current.p0_name, current.p1_name];
+        scoreEl.innerHTML = names.map((nm, p) => `
+          <div class="rs-row ${p === 0 ? 'rs-blue' : 'rs-red'}">
+            <span class="rs-name">${nameHtml(nm)}</span>
+            <span class="rs-stat"><b class="rs-land">0</b> land</span>
+            <span class="rs-stat"><b class="rs-army">0</b> army</span>
+          </div>`).join('');
+        scoreRefs = [...scoreEl.querySelectorAll('.rs-row')].map((row) => ({
+          row, land: row.querySelector('.rs-land'), army: row.querySelector('.rs-army'),
+        }));
+      }
+      function updateScore() {
+        if (!scoreRefs) return;
+        const s = player.stats();
+        if (!s) return;
+        const lead = s.army[0] === s.army[1] ? -1 : (s.army[0] > s.army[1] ? 0 : 1);
+        scoreRefs.forEach((ref, p) => {
+          ref.land.textContent = s.land[p];
+          ref.army.textContent = s.army[p];
+          ref.row.classList.toggle('is-leader', lead === p);
+        });
+      }
+
+      const player = window.GeneralsBoard.mountPlayer({
+        container: board, frameMs: SPEEDS[speedIdx],
+        onFrame: (f, total) => {
+          tickEl.textContent = `Tick ${f} / ${total ? total - 1 : 0}`;
+          scrub.value = String(f);
+          syncPlay();
+          updateScore();
+        },
+      });
+
+      const stageLabel = (m) => (stages[m.stage] && stages[m.stage].label) || m.stage || '';
+
+      async function open(m) {
+        current = m;
+        buildScore();
+        meta.textContent = `${T.label} · ${stageLabel(m)} · seed ${m.seed}`;
+        stageMsg.style.display = '';
+        stageMsg.textContent = 'Loading replay…';
+        document.querySelectorAll('.replay-item').forEach((el) => el.classList.toggle('is-active', el.dataset.id === String(m._i)));
+        const url = new URL(location);
+        url.searchParams.set('t', tKey);
+        url.searchParams.set('id', m._i);
+        history.replaceState(null, '', url);
+        try {
+          if (!m.replay_gz) throw new Error('no replay');
+          const info = await player.load(m.replay_gz);
+          stageMsg.style.display = 'none';
+          scrub.max = String(Math.max(0, info.total - 1));
+          scrub.value = '0';
+          setControls(true);
+          player.play();
+          syncPlay();
+        } catch (e) {
+          stageMsg.style.display = '';
+          stageMsg.textContent = 'Could not load this replay.';
+        }
+      }
+
+      // Rows the current filters leave: the ?player= archive first, then the
+      // fuzzy query. On one player's archive the query hits the OPPONENT —
+      // scoring their own name too would match every row and rank them by noise.
+      function filtered() {
+        const q = ($('rSearch').value || '').trim().toLowerCase();
+        let rows = matches.map((m, i) => ({ m, i, a: null, b: null }));
+        if (q) {
+          const self = playerFilter.toLowerCase();
+          rows = rows
+            .map((r) => {
+              const a = self && r.m.p0_name.toLowerCase() === self ? null : fuzzy(r.m.p0_name, q);
+              const b = self && r.m.p1_name.toLowerCase() === self ? null : fuzzy(r.m.p1_name, q);
+              return { ...r, a, b, score: Math.max(a ? a.score : -Infinity, b ? b.score : -Infinity) };
+            })
+            .filter((r) => r.score > -Infinity)
+            .sort((x, y) => y.score - x.score || x.i - y.i);  // best first, then list order
+        }
+        return { rows, q };
+      }
+
+      function renderList() {
+        const list = $('rList');
+        if (!matches.length) {
+          list.innerHTML = `<div class="replay-empty">${playerFilter ? `No ${esc(T.label)} games for ${esc(playerFilter)}.` : 'No games in this tournament.'}</div>`;
+          return;
+        }
+        const { rows, q } = filtered();
+        $('rCount').textContent = q ? `${rows.length} / ${matches.length}` : `${matches.length}`;
+        if (!rows.length) { list.innerHTML = '<div class="replay-empty">No games for that player.</div>'; return; }
+        const page = rows.slice(0, shown);
+        list.innerHTML = page.map(({ m, a, b }) => {
+          const aWon = m.winner === 'p0', bWon = m.winner === 'p1';
+          const draw = !aWon && !bWon;
+          const chip = (won) => draw
+            ? '<span class="rb-res d" title="Draw">D</span>'
+            : won
+              ? '<span class="rb-res w" title="Won">W</span>'
+              : '<span class="rb-res l" title="Lost">L</span>';
+          return `
+          <div class="replay-item${current === m ? ' is-active' : ''}" data-id="${m._i}">
+            <div class="replay-item-bots">
+              <span class="rb-name${aWon ? ' win' : ''}">${chip(aWon)}${hi(m.p0_name, a)}</span>
+              <span class="rb-name${bWon ? ' win' : ''}">${chip(bWon)}${hi(m.p1_name, b)}</span>
+            </div>
+            <div class="replay-item-side">
+              <span class="replay-item-meta">${m.turns} turns${draw ? ' · draw' : ''}</span>
+              <span class="replay-item-stage">${esc(stageLabel(m))}</span>
+            </div>
+          </div>`;
+        }).join('') + (rows.length > page.length
+          ? `<div class="replay-more">Showing ${page.length} of ${rows.length} · <button type="button" data-more>Show all</button></div>`
+          : '');
+        list.querySelectorAll('.replay-item').forEach((el) => {
+          el.addEventListener('click', () => open(matches[Number(el.dataset.id)]));
+        });
+        const more = list.querySelector('[data-more]');
+        if (more) more.addEventListener('click', () => { shown = rows.length; renderList(); });
+      }
+
+      playBtn.addEventListener('click', () => { player.toggle(); syncPlay(); });
+      $('rRestart').addEventListener('click', () => { player.seek(0); player.play(); syncPlay(); });
+      $('rEnd').addEventListener('click', () => { player.pause(); player.seek(player.total - 1); syncPlay(); });
+      scrub.addEventListener('input', () => { player.pause(); player.seek(parseInt(scrub.value, 10)); syncPlay(); });
+      speedBtn.addEventListener('click', () => {
+        speedIdx = (speedIdx + 1) % SPEEDS.length;
+        speedBtn.textContent = LABELS[speedIdx];
+        player.setSpeed(SPEEDS[speedIdx]);
+      });
+      $('rSearch').addEventListener('input', () => { shown = PAGE; renderList(); });
+
+      // keyboard: space = play/pause, ←/→ = step one tick
+      document.addEventListener('keydown', (e) => {
+        if (!current) return;
+        const tag = (e.target.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+        if (e.code === 'Space') { e.preventDefault(); player.toggle(); syncPlay(); }
+        else if (e.code === 'ArrowRight') { e.preventDefault(); player.pause(); player.seek(player.frame + 1); syncPlay(); }
+        else if (e.code === 'ArrowLeft') { e.preventDefault(); player.pause(); player.seek(player.frame - 1); syncPlay(); }
+      });
+
+      setControls(false);
+
+      // Tabs keep the ?player= filter; the active tournament is filled in.
+      document.querySelectorAll('.rl-tabs a').forEach((a) => {
+        const u = new URL(a.getAttribute('href'), location.href);
+        if (playerFilter) u.searchParams.set('player', playerFilter);
+        a.setAttribute('href', u.search);
+        a.classList.toggle('is-on', a.dataset.t === tKey);
+        a.setAttribute('aria-selected', a.dataset.t === tKey ? 'true' : 'false');
+      });
+      if (playerFilter) {
+        const all = new URL(location.href);
+        all.searchParams.delete('player'); all.searchParams.delete('id');
+        $('rListTitle').innerHTML = `${esc(playerFilter)}'s games <a class="replay-list-clear" href="${esc(all.search || '/replays/')}">(all)</a>`;
+        document.title = `${playerFilter} — Replays — Generals Competition`;
+      } else {
+        $('rListTitle').textContent = `${T.label} · all games`;
+      }
+
+      fetch(T.src)
+        .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then((D) => {
+          stages = D.stages || {};
+          const self = playerFilter.toLowerCase();
+          const all = (D.matches || []).map((m, i) => ({ ...m, _i: i }));
+          matches = self
+            ? all.filter((m) => m.p0_name.toLowerCase() === self || m.p1_name.toLowerCase() === self)
+            : all;
+          renderList();
+          if (!matches.length) {
+            stageMsg.textContent = playerFilter ? `No ${T.label} games for ${playerFilter}.` : 'No games in this tournament.';
+            return;
+          }
+          const id = params.get('id');
+          const want = id != null ? matches.find((m) => String(m._i) === id) : null;
+          open(want || matches[0]);
+        })
+        .catch(() => { stageMsg.textContent = 'Could not load the tournament.'; $('rList').innerHTML = '<div class="replay-empty">Could not load the tournament.</div>'; });
+    })();
+  </script>
+</body>
+</html>
